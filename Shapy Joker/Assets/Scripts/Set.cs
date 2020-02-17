@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
 
 public enum SetType
 {
@@ -9,7 +7,7 @@ public enum SetType
     ShapeNumber,
     ShapeColorCons,
     ColorCons,
-    ShapeCon
+    ShapeCons
 }
 
 public class Set
@@ -37,145 +35,8 @@ public class Set
             setValid = false;
             return;
         }
-        CheckIfNumberColor();
-        if (setType == SetType.NumberColor)
-        {
-            setValid = JokerCountInSet() < 2;
-            return;
-        }
-        CheckIfShapeNumber();
-        if (setType == SetType.ShapeNumber)
-        {
-            setValid = JokerCountInSet() < 2;
-            return;
-        }
-        CheckIfShapeColorCons();
-        if (setType == SetType.ShapeColorCons)
-        {
-            setValid = JokerCountInSet() < 2;
-            return;
-        }
-        CheckIfColorCons();
-        if (setType == SetType.ColorCons)
-        {
-            setValid = JokerCountInSet() < 2;
-            return;
-        }
-        CheckIfShapeCons();
-        if (setType == SetType.ShapeCon)
-        {
-            setValid = JokerCountInSet() < 2;
-            return;
-        }
-        setValid = false;
-    }
-
-    void CheckIfNumberColor()
-    {
-        bool valid = true;
-        for (int index = 0; index < cardsInSet.Count && valid; index++)
-        {
-            for (int checkedIndex = 0; checkedIndex < cardsInSet.Count && valid; checkedIndex++)
-            {
-                if (index == checkedIndex) continue;
-                bool jokerInPair = cardsInSet[index].jokerCard || cardsInSet[checkedIndex].jokerCard;
-                valid = cardsInSet[index].color == cardsInSet[checkedIndex].color;
-                valid = valid && (cardsInSet[index].number == cardsInSet[checkedIndex].number || jokerInPair) &&
-                    cardsInSet[index].shape != cardsInSet[checkedIndex].shape;
-            }
-        }
-        if (valid)
-        {
-            setType = SetType.NumberColor;
-        }
-    }
-
-    void CheckIfShapeNumber()
-    {
-        bool valid = true;
-        for (int index = 0; index < cardsInSet.Count && valid; index++)
-        {
-            for (int checkedIndex = 0; checkedIndex < cardsInSet.Count && valid; checkedIndex++)
-            {
-                if (index == checkedIndex) continue;
-                bool pairWithJoker = cardsInSet[index].jokerCard || cardsInSet[checkedIndex].jokerCard;
-                valid = cardsInSet[index].color != cardsInSet[checkedIndex].color;
-                valid = valid && (cardsInSet[index].number == cardsInSet[checkedIndex].number || pairWithJoker) &&
-                    (cardsInSet[index].shape == cardsInSet[checkedIndex].shape || pairWithJoker);
-            }
-        }
-        if (valid)
-        {
-            setType = SetType.ShapeNumber;
-        }
-    }
-
-    void CheckIfShapeColorCons()
-    {
-        bool valid = true;
-        int offset = FindSmallestNumberInSet();
-        RearrangeCardsInSetBy(offset);
-        for (int index = 0; index < cardsInSet.Count - 1 && valid; index++)
-        {
-            bool pairWithJoker = cardsInSet[index].jokerCard || cardsInSet[index + 1].jokerCard;
-            valid = (cardsInSet[index].shape == cardsInSet[index + 1].shape || pairWithJoker) && 
-                (cardsInSet[index].number == cardsInSet[index + 1].number - 1 || pairWithJoker);
-            valid = valid && cardsInSet[index].color == cardsInSet[index + 1].color;
-        }
-        if (valid)
-        {
-            setType = SetType.ShapeColorCons;
-        }
-    }
-
-    void CheckIfColorCons()
-    {
-        bool valid = true;
-        int offset = FindSmallestNumberInSet();
-        RearrangeCardsInSetBy(offset);
-        for (int index = 0; index < cardsInSet.Count - 1 && valid; index++)
-        {
-            bool pairWithJoker = cardsInSet[index].jokerCard || cardsInSet[index + 1].jokerCard;
-            valid = cardsInSet[index].number == cardsInSet[index + 1].number - 1 || pairWithJoker;
-            valid = valid && cardsInSet[index].color == cardsInSet[index + 1].color;
-        }
-        for (int index = 0; index < cardsInSet.Count && valid; index++)
-        {
-            for (int checkedIndex = 0; checkedIndex < cardsInSet.Count && valid; checkedIndex++)
-            {
-                if (index == checkedIndex) continue;
-                valid = cardsInSet[index].shape != cardsInSet[checkedIndex].shape;
-            }
-        }
-        if (valid)
-        {
-            setType = SetType.ColorCons;
-        }
-    }
-
-    void CheckIfShapeCons()
-    {
-        bool valid = true;
-        int offset = FindSmallestNumberInSet();
-        RearrangeCardsInSetBy(offset);
-        for (int index = 0; index < cardsInSet.Count - 1 && valid; index++)
-        {
-            bool pairWithJoker = cardsInSet[index].jokerCard || cardsInSet[index + 1].jokerCard;
-            valid = (cardsInSet[index].shape == cardsInSet[index + 1].shape || pairWithJoker) &&
-                (cardsInSet[index].number == cardsInSet[index + 1].number - 1 || pairWithJoker);
-        }
-        for (int index = 0; index < cardsInSet.Count && valid; index++)
-        {
-            for (int checkedIndex = 0; checkedIndex < cardsInSet.Count && valid; checkedIndex++)
-            {
-                if (index == checkedIndex) continue;
-                valid = cardsInSet[index].color != cardsInSet[checkedIndex].color;
-            }
-        }
-        if (valid)
-        {
-            setType = SetType.ShapeCon;
-        }
+        CheckSequence();
+        setValid = setType != SetType.None && JokerCountInSet() < 2;
     }
 
     int JokerCountInSet()
@@ -242,11 +103,57 @@ public class Set
         if (color) setDeter += "c";
         if (number) setDeter += "n";
         if (numberCon) setDeter += "N";
+        bool unique = true;
         switch (setDeter)
         {
-            case "scN":
+            case "cn":
+                for (int index = 0; index < cardsInSet.Count && unique; index++)
+                {
+                    for (int checkedIndex = 0; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
+                    {
+                        if (index == checkedIndex) continue;
+                        unique = cardsInSet[index].shape != cardsInSet[checkedIndex].shape;
+                    }
+                }
+                if (unique) setType = SetType.NumberColor;
                 break;
-            
+
+            case "sn":
+                for (int index = 0; index < cardsInSet.Count && unique; index++)
+                {
+                    for (int checkedIndex = 0; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
+                    {
+                        if (index == checkedIndex) continue;
+                        unique = cardsInSet[index].color != cardsInSet[checkedIndex].color;
+                    }
+                }
+                if (unique) setType = SetType.ShapeNumber;
+                break;
+            case "cN":
+                for (int index = 0; index < cardsInSet.Count && unique; index++)
+                {
+                    for (int checkedIndex = 0; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
+                    {
+                        if (index == checkedIndex) continue;
+                        unique = cardsInSet[index].shape != cardsInSet[checkedIndex].shape;
+                    }
+                }
+                if (unique) setType = SetType.ColorCons;
+                break;
+            case "sN":
+                for (int index = 0; index < cardsInSet.Count && unique; index++)
+                {
+                    for (int checkedIndex = 0; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
+                    {
+                        if (index == checkedIndex) continue;
+                        unique = cardsInSet[index].color != cardsInSet[checkedIndex].color;
+                    }
+                }
+                if (unique) setType = SetType.ShapeCons;
+                break;
+            case "scN":
+                setType = SetType.ShapeColorCons;
+                break;
         }
     }
 }
