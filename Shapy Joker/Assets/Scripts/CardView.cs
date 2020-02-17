@@ -33,6 +33,7 @@ public class CardView : MonoBehaviour
 
     private void OnMouseDown()
     {
+        if (!FindObjectOfType<GameManager>().isPlayerTurn) return;
         HandleSelected();
     }
 

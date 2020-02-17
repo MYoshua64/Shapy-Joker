@@ -15,7 +15,7 @@ public class Set
     List<CardData> cardsInSet = new List<CardData>();
     int minimumCardsInSet = 3;
     int maximumCardsInSet = 5;
-    public bool setValid { get; private set; }
+    public bool isSetValid { get; private set; }
     public SetType setType { get; private set; }
 
     public Set(List<CardData> setCards)
@@ -32,11 +32,11 @@ public class Set
     {
         if (cardsInSet.Count < minimumCardsInSet)
         {
-            setValid = false;
+            isSetValid = false;
             return;
         }
         CheckSequence();
-        setValid = setType != SetType.None && JokerCountInSet() < 2;
+        isSetValid = setType != SetType.None && JokerCountInSet() < 2;
     }
 
     int JokerCountInSet()
@@ -117,7 +117,6 @@ public class Set
                 }
                 if (unique) setType = SetType.NumberColor;
                 break;
-
             case "sn":
                 for (int index = 0; index < cardsInSet.Count && unique; index++)
                 {

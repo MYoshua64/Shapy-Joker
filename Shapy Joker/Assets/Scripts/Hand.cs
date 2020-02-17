@@ -29,6 +29,6 @@ public class Hand : MonoBehaviour
     {
         attachedSet = new Set(cardsInHand);
         attachedSet.CheckSetValidityBySequence();
-        FindObjectOfType<GameManager>().SetSubmitButtonInteractable(attachedSet.setValid);
+        FindObjectOfType<GameManager>().SetSubmitButtonInteractable(attachedSet.isSetValid);
     }
 }

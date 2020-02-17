@@ -143,9 +143,8 @@ public class DeckBuilder : MonoBehaviour
     {
         while (numberToDeal > 0)
         {
-            CardView newCard = Instantiate(cardViewPF, gm.lastPositions[0], Quaternion.identity);
+            CardView newCard = Instantiate(cardViewPF, gm.lastPositions[0], Quaternion.identity, CardView.tableCardsParent);
             gm.lastPositions.RemoveAt(0);
-            newCard.transform.SetParent(CardView.tableCardsParent);
             AttachCardToView(newCard);
             numberToDeal--;
         }

@@ -7,7 +7,7 @@ using TMPro;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] Hand playerHand;
-    [SerializeField] Hand opponentHand;
+    public Hand opponentHand;
     [SerializeField] Button submitButton;
     [SerializeField] TextMeshProUGUI playerDeckText;
     [SerializeField] TextMeshProUGUI opponentDeckText;
@@ -43,7 +43,15 @@ public class GameManager : MonoBehaviour
         }
         FindObjectOfType<DeckBuilder>().DealNewCards(lastPositions.Count);
         isPlayerTurn = !isPlayerTurn;
-        activeHand = isPlayerTurn ? playerHand : opponentHand;
+        if (isPlayerTurn)
+        {
+            activeHand = playerHand;
+        }
+        else
+        {
+            activeHand = opponentHand;
+            FindObjectOfType<Opponent>().StartTurn();
+        }
     }
 
     public void SetSubmitButtonInteractable(bool value)
