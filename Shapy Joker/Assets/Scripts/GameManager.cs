@@ -28,7 +28,7 @@ public class GameManager : MonoBehaviour
         foreach (CardView card in activeHand.transform.GetComponentsInChildren<CardView>())
         {
             lastPositions.Add(card.originalPos);
-            activeHand.RemoveFromHand(card.attachedCard);
+            activeHand.RemoveFromHand(card);
             Destroy(card.gameObject);
             if (isPlayerTurn)
             {
@@ -50,12 +50,17 @@ public class GameManager : MonoBehaviour
         else
         {
             activeHand = opponentHand;
-            FindObjectOfType<Opponent>().StartTurn();
+            Invoke("ActivateOpponent", 1f);
         }
     }
 
     public void SetSubmitButtonInteractable(bool value)
     {
         submitButton.interactable = value;
+    }
+
+    void ActivateOpponent()
+    {
+        FindObjectOfType<Opponent>().StartTurn();
     }
 }

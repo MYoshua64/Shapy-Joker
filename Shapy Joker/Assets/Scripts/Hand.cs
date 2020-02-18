@@ -8,15 +8,27 @@ public class Hand : MonoBehaviour
     public int maximumCards { get; private set; } = 5;
     Set attachedSet;
 
-    public void AddToHand(CardData newCard)
+    public void AddToHand(CardView newCard)
     {
-        cardsInHand.Add(newCard);
+        newCard.HandleSelected();
+        cardsInHand.Add(newCard.attachedCard);
         CheckAttachedSetValidity();
     }
 
-    public void RemoveFromHand(CardData cardToRemove)
+    public void RemoveFromHandAt(int index)
     {
-        cardsInHand.Remove(cardToRemove);
+        if (index < cardsInHand.Count)
+        {
+            cardsInHand.RemoveAt(index);
+            CheckAttachedSetValidity();
+        }
+    }
+
+    public void RemoveFromHand(CardView cardToRemove)
+    {
+        if (!cardsInHand.Contains(cardToRemove.attachedCard)) return;
+        cardToRemove.HandleSelected();
+        cardsInHand.Remove(cardToRemove.attachedCard);
         CheckAttachedSetValidity();
     }
 
@@ -29,6 +41,17 @@ public class Hand : MonoBehaviour
     {
         attachedSet = new Set(cardsInHand);
         attachedSet.CheckSetValidityBySequence();
-        FindObjectOfType<GameManager>().SetSubmitButtonInteractable(attachedSet.isSetValid);
+        if (FindObjectOfType<GameManager>().isPlayerTurn)
+            FindObjectOfType<GameManager>().SetSubmitButtonInteractable(attachedSet.isSetValid);
+        else
+            FindObjectOfType<Opponent>().IsSetValid(attachedSet.isSetValid);
+    }
+
+    public void Print()
+    {
+        foreach (CardData card in cardsInHand)
+        {
+            card.Print();
+        }
     }
 }

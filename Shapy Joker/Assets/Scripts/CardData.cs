@@ -66,4 +66,9 @@ public class CardData
         }
         else if (id.Length == 2 && id[1] == 'J') jokerCard = true;
     }
+
+    public void Print()
+    {
+        Debug.Log(id);
+    }
 }

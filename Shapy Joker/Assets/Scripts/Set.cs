@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 
 public enum SetType
 {
@@ -54,7 +55,7 @@ public class Set
         int offset = 6;
         for (int index = 0; index < cardsInSet.Count; index++)
         {
-            if (cardsInSet[index].number < offset) offset = cardsInSet[index].number;
+            if (!cardsInSet[index].jokerCard && cardsInSet[index].number < offset) offset = cardsInSet[index].number;
         }
         return offset;
     }
@@ -79,12 +80,11 @@ public class Set
     void CheckSequence()
     {
         string setDeter = "";
-        bool shape = true, number = true, color = true, numberCon = true;
+        bool shape = true, number = true, color = true, numberCon = false;
         for (int index = 0; index < cardsInSet.Count; index++)
         {
-            for (int checkedIndex = 0; checkedIndex < cardsInSet.Count; checkedIndex++)
+            for (int checkedIndex = index + 1; checkedIndex < cardsInSet.Count; checkedIndex++)
             {
-                if (index == checkedIndex) continue;
                 bool jokerInPair = cardsInSet[index].jokerCard || cardsInSet[checkedIndex].jokerCard;
                 if (shape)
                     shape = cardsInSet[index].shape == cardsInSet[checkedIndex].shape || jokerInPair;
@@ -94,10 +94,17 @@ public class Set
                     color = cardsInSet[index].color == cardsInSet[checkedIndex].color;
             }
         }
-        for (int index = 0; index < cardsInSet.Count - 1 && numberCon; index++)
+        if (!number)
         {
-            bool jokerInPair = cardsInSet[index].jokerCard || cardsInSet[index + 1].jokerCard;
-            numberCon = cardsInSet[index].number == cardsInSet[index + 1].number - 1 || jokerInPair;
+            int offset = FindSmallestNumberInSet();
+            RearrangeCardsInSetBy(offset);
+            numberCon = true;
+            for (int index = 0; index < cardsInSet.Count - 1 && numberCon; index++)
+            {
+            
+                bool jokerInPair = cardsInSet[index].jokerCard || cardsInSet[index + 1].jokerCard;
+                numberCon = Math.Abs(cardsInSet[index].number - cardsInSet[index + 1].number) == 1 || jokerInPair;
+            }
         }
         if (shape) setDeter += "s";
         if (color) setDeter += "c";
@@ -109,9 +116,8 @@ public class Set
             case "cn":
                 for (int index = 0; index < cardsInSet.Count && unique; index++)
                 {
-                    for (int checkedIndex = 0; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
+                    for (int checkedIndex = index + 1; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
                     {
-                        if (index == checkedIndex) continue;
                         unique = cardsInSet[index].shape != cardsInSet[checkedIndex].shape;
                     }
                 }
@@ -120,9 +126,8 @@ public class Set
             case "sn":
                 for (int index = 0; index < cardsInSet.Count && unique; index++)
                 {
-                    for (int checkedIndex = 0; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
+                    for (int checkedIndex = index + 1; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
                     {
-                        if (index == checkedIndex) continue;
                         unique = cardsInSet[index].color != cardsInSet[checkedIndex].color;
                     }
                 }
@@ -131,9 +136,8 @@ public class Set
             case "cN":
                 for (int index = 0; index < cardsInSet.Count && unique; index++)
                 {
-                    for (int checkedIndex = 0; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
+                    for (int checkedIndex = index + 1 ; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
                     {
-                        if (index == checkedIndex) continue;
                         unique = cardsInSet[index].shape != cardsInSet[checkedIndex].shape;
                     }
                 }
@@ -142,9 +146,8 @@ public class Set
             case "sN":
                 for (int index = 0; index < cardsInSet.Count && unique; index++)
                 {
-                    for (int checkedIndex = 0; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
+                    for (int checkedIndex = index + 1; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
                     {
-                        if (index == checkedIndex) continue;
                         unique = cardsInSet[index].color != cardsInSet[checkedIndex].color;
                     }
                 }

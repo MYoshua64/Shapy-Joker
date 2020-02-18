@@ -12,7 +12,6 @@ public class CardView : MonoBehaviour
     public CardData attachedCard { get; private set; }
     Collider2D cardCollider2D;
     bool selected = false;
-    Hand opponentHand;
 
     private void Init()
     {
@@ -34,7 +33,14 @@ public class CardView : MonoBehaviour
     private void OnMouseDown()
     {
         if (!FindObjectOfType<GameManager>().isPlayerTurn) return;
-        HandleSelected();
+        if (selected)
+        {
+            gm.activeHand.RemoveFromHand(this);
+        }
+        else
+        {
+            gm.activeHand.AddToHand(this);
+        }
     }
 
     bool TouchInColliderBounds(Touch touch)
@@ -65,17 +71,15 @@ public class CardView : MonoBehaviour
         Init();
     }
 
-    void HandleSelected()
+    public void HandleSelected()
     {
         if (selected)
         {
-            gm.activeHand.RemoveFromHand(attachedCard);
             transform.SetParent(tableCardsParent);
             transform.localPosition = originalPos;
         }
         else if (gm.activeHand.GetCardAmountInHand() < gm.activeHand.maximumCards)
         {
-            gm.activeHand.AddToHand(attachedCard);
             transform.SetParent(gm.activeHand.transform);
         }
         else return;
