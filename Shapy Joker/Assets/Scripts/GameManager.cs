@@ -6,6 +6,10 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
+    [SerializeField] RectTransform playerWinScreen;
+    [SerializeField] RectTransform playerLoseScreen;
+    Opponent opponent;
+    [SerializeField] DeckBuilder deck;
     [SerializeField] Hand playerHand;
     public Hand opponentHand;
     [SerializeField] Button submitButton;
@@ -13,45 +17,84 @@ public class GameManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI opponentDeckText;
     public Hand activeHand { get; private set; }
     public bool isPlayerTurn { get; private set; } = true;
-    public List<Vector2> lastPositions { get; private set; } = new List<Vector2>();
+    public bool isGameOver { get; private set; } = false;
     int playerScore = 34, opponentScore = 34;
+
+    //This will contain the positions of the cards before they are submitted
+    public List<Vector3> lastPositions { get; private set; } = new List<Vector3>();
 
     private void Awake()
     {
+        opponent = FindObjectOfType<Opponent>();
         activeHand = isPlayerTurn ? playerHand : opponentHand;
+        if (!isPlayerTurn) Invoke("ActivateOpponent", 1f);
         playerDeckText.text = opponentDeckText.text = "34";
     }
 
     public void SubmitSet()
     {
+        StartCoroutine(MoveCardsOutOfScreen());
+    }
+
+    IEnumerator MoveCardsOutOfScreen()
+    {
         lastPositions.Clear();
-        foreach (CardView card in activeHand.transform.GetComponentsInChildren<CardView>())
+        foreach (RectTransform slot in activeHand.cardSlots)
         {
+            CardVisual card = slot.GetComponentInChildren<CardVisual>();
+            if (!card) break;
             lastPositions.Add(card.originalPos);
             activeHand.RemoveFromHand(card);
-            Destroy(card.gameObject);
+            CardVisual.tableCardsParent.RemoveFromFormation(card);
+            iTween.MoveTo(card.gameObject, new Vector3(-8, 0, 0), 2f);
+            Destroy(card.gameObject, 2f);
+            yield return new WaitForSeconds(0.2f);
+        }
+        yield return new WaitForSeconds(0.3f);
+        deck.DealNewCards(lastPositions.Count);
+    }
+
+    public void HandleTurnEnd()
+    {
+        if (!isGameOver)
+        {
+            isPlayerTurn = !isPlayerTurn;
             if (isPlayerTurn)
             {
-                playerScore--;
-                playerDeckText.text = playerScore.ToString();
+                activeHand = playerHand;
             }
             else
             {
-                opponentScore--;
-                opponentDeckText.text = opponentScore.ToString();
+                activeHand = opponentHand;
+                Invoke("ActivateOpponent", 1f);
             }
-        }
-        FindObjectOfType<DeckBuilder>().DealNewCards(lastPositions.Count);
-        isPlayerTurn = !isPlayerTurn;
-        if (isPlayerTurn)
-        {
-            activeHand = playerHand;
         }
         else
         {
-            activeHand = opponentHand;
-            Invoke("ActivateOpponent", 1f);
+            if (playerScore <= 0)
+            {
+                playerWinScreen.gameObject.SetActive(true);
+            }
+            else if (opponentScore <= 0)
+            {
+                playerLoseScreen.gameObject.SetActive(true);
+            }
         }
+    }
+
+    public void LowerScore()
+    {
+        if (isPlayerTurn)
+        {
+            playerScore--;
+            playerDeckText.text = playerScore.ToString();
+        }
+        else
+        {
+            opponentScore--;
+            opponentDeckText.text = opponentScore.ToString();
+        }
+        isGameOver = playerScore <= 0 || opponentScore <= 0;
     }
 
     public void SetSubmitButtonInteractable(bool value)
@@ -61,6 +104,11 @@ public class GameManager : MonoBehaviour
 
     void ActivateOpponent()
     {
-        FindObjectOfType<Opponent>().StartTurn();
+        opponent.StartTurn();
+    }
+
+    void HandleGameOver()
+    {
+
     }
 }

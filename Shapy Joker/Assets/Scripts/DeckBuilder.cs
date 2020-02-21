@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class DeckBuilder : MonoBehaviour
 {
-    [SerializeField] CardView cardViewPF;
+    [SerializeField] RectTransform playerDeck;
+    [SerializeField] RectTransform opponentDeck;
+    [SerializeField] CardVisual cardViewPF;
     List<string> preDeck = new List<string>();
     List<CardData> deck = new List<CardData>();
-    CardView[] cardsOnScreen;
+    CardVisual[] cardsOnScreen;
     GameManager gm;
     int currentCardIndex = 0;
 
@@ -126,14 +128,14 @@ public class DeckBuilder : MonoBehaviour
 
     void AttachCardsToView()
     {
-        cardsOnScreen = FindObjectsOfType<CardView>();
+        cardsOnScreen = FindObjectsOfType<CardVisual>();
         for (; currentCardIndex < cardsOnScreen.Length; currentCardIndex++)
         {
             cardsOnScreen[currentCardIndex].AttachCardData(deck[currentCardIndex]);
         }
     }
 
-    void AttachCardToView(CardView cardView)
+    void AttachCardToView(CardVisual cardView)
     {
         cardView.AttachCardData(deck[currentCardIndex]);
         currentCardIndex++;
@@ -141,12 +143,24 @@ public class DeckBuilder : MonoBehaviour
 
     public void DealNewCards(int numberToDeal)
     {
-        while (numberToDeal > 0)
+        StartCoroutine(StartDealing(numberToDeal));
+    }
+
+    IEnumerator StartDealing(int numberToDeal)
+    {
+        RectTransform activeDeck = gm.isPlayerTurn ? playerDeck : opponentDeck;
+        while (numberToDeal > 0 && !gm.isGameOver)
         {
-            CardView newCard = Instantiate(cardViewPF, gm.lastPositions[0], Quaternion.identity, CardView.tableCardsParent);
+            CardVisual newCard = Instantiate(cardViewPF, activeDeck.position, Quaternion.identity, CardVisual.tableCardsParent.transform);
+            CardVisual.tableCardsParent.AddToFormation(newCard);
+            newCard.SetOriginalPosition(gm.lastPositions[0]);
+            iTween.MoveTo(newCard.gameObject, gm.lastPositions[0], 0.75f);
             gm.lastPositions.RemoveAt(0);
             AttachCardToView(newCard);
             numberToDeal--;
+            gm.LowerScore();
+            yield return new WaitForSeconds(0.3f);
         }
+        gm.HandleTurnEnd();
     }
 }

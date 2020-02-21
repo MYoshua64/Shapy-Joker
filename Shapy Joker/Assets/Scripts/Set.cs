@@ -21,7 +21,8 @@ public class Set
 
     public Set(List<CardData> setCards)
     {
-        cardsInSet = setCards;
+        cardsInSet.Clear();
+        cardsInSet.AddRange(setCards);
     }
 
     public bool IsFull()
@@ -50,37 +51,56 @@ public class Set
         return jokerCount;
     }
 
+    void RearrangeCardsInSetByNumber()
+    {
+        int offset = FindSmallestNumberInSet();
+        for (int index = 0; index < cardsInSet.Count;)
+        {
+            CardData card = cardsInSet[index];
+            //skipping checking the card if it's a joker
+            if (card.jokerCard)
+            {
+                index++;
+                continue;
+            }
+
+            //determines where in the list we want the card to be based on number
+            int desiredIndex = card.number - offset;
+
+            //condition for exiting the process - desired index out of range
+            if (desiredIndex >= cardsInSet.Count) return;
+            if (index != desiredIndex && card.number != cardsInSet[desiredIndex].number)
+                ReplaceCards(index, desiredIndex);
+            else index++;
+        }
+    }
+
     int FindSmallestNumberInSet()
     {
         int offset = 6;
-        for (int index = 0; index < cardsInSet.Count; index++)
+        for (int i = 0; i < cardsInSet.Count; i++)
         {
-            if (!cardsInSet[index].jokerCard && cardsInSet[index].number < offset) offset = cardsInSet[index].number;
+            if (!cardsInSet[i].jokerCard && cardsInSet[i].number < offset) offset = cardsInSet[i].number;
         }
         return offset;
     }
 
-    void RearrangeCardsInSetBy(int offset)
+    void ReplaceCards(int indexA, int indexB)
     {
-        for (int checkedNumber = offset; checkedNumber < 6; checkedNumber++)
-        {
-            for (int index = 0; index < cardsInSet.Count; index++)
-            {
-                if (cardsInSet[index].number == checkedNumber && cardsInSet[index].number != index + offset)
-                {
-                    CardData pulledCard = cardsInSet[index];
-                    cardsInSet.RemoveAt(index);
-                    cardsInSet.Add(pulledCard);
-                    break;
-                }
-            }
-        }
+        CardData temp = cardsInSet[indexB];
+        cardsInSet[indexB] = cardsInSet[indexA];
+        cardsInSet[indexA] = temp;
     }
 
+    /// <summary>
+    /// Checks a set's validity by way of string reference. The string is built
+    /// according to the matched attributes between the cards in the set.
+    /// </summary>
     void CheckSequence()
     {
         string setDeter = "";
         bool shape = true, number = true, color = true, numberCon = false;
+        //comparing each card to the others in the set to check for any matches
         for (int index = 0; index < cardsInSet.Count; index++)
         {
             for (int checkedIndex = index + 1; checkedIndex < cardsInSet.Count; checkedIndex++)
@@ -96,24 +116,26 @@ public class Set
         }
         if (!number)
         {
-            int offset = FindSmallestNumberInSet();
-            RearrangeCardsInSetBy(offset);
+            //Checking for consecutive numbers in the set
+            RearrangeCardsInSetByNumber();
             numberCon = true;
             for (int index = 0; index < cardsInSet.Count - 1 && numberCon; index++)
             {
-            
                 bool jokerInPair = cardsInSet[index].jokerCard || cardsInSet[index + 1].jokerCard;
-                numberCon = Math.Abs(cardsInSet[index].number - cardsInSet[index + 1].number) == 1 || jokerInPair;
+                numberCon = cardsInSet[index + 1].number - cardsInSet[index].number == 1 || jokerInPair;
             }
         }
+        //Building the string reference according to the matches found
         if (shape) setDeter += "s";
         if (color) setDeter += "c";
         if (number) setDeter += "n";
         if (numberCon) setDeter += "N";
         bool unique = true;
+        //And starts analyzing the string
         switch (setDeter)
         {
             case "cn":
+                //This makes sure there are no two cards of the same shape
                 for (int index = 0; index < cardsInSet.Count && unique; index++)
                 {
                     for (int checkedIndex = index + 1; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
@@ -124,6 +146,7 @@ public class Set
                 if (unique) setType = SetType.NumberColor;
                 break;
             case "sn":
+                //This makes sure there are no two cards of the same color
                 for (int index = 0; index < cardsInSet.Count && unique; index++)
                 {
                     for (int checkedIndex = index + 1; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
@@ -134,6 +157,7 @@ public class Set
                 if (unique) setType = SetType.ShapeNumber;
                 break;
             case "cN":
+                //This makes sure there are no two cards of the same shape
                 for (int index = 0; index < cardsInSet.Count && unique; index++)
                 {
                     for (int checkedIndex = index + 1 ; checkedIndex < cardsInSet.Count && unique; checkedIndex++)
@@ -144,6 +168,7 @@ public class Set
                 if (unique) setType = SetType.ColorCons;
                 break;
             case "sN":
+                //This makes sure there are no two cards with the same color
                 for (int index = 0; index < cardsInSet.Count && unique; index++)
                 {
                     for (int checkedIndex = index + 1; checkedIndex < cardsInSet.Count && unique; checkedIndex++)

@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CardView : MonoBehaviour
+public class CardVisual : MonoBehaviour
 {
     [SerializeField] string attachedCardID;
     GameManager gm;
-    public Vector2 originalPos { get; private set; }
-    public static Transform tableCardsParent;
+    public Vector3 originalPos { get; private set; }
+    public static TableFormation tableCardsParent;
     public CardData attachedCard { get; private set; }
     Collider2D cardCollider2D;
     bool selected = false;
@@ -16,8 +16,7 @@ public class CardView : MonoBehaviour
     private void Init()
     {
         gm = FindObjectOfType<GameManager>();
-        tableCardsParent = transform.parent;
-        originalPos = transform.localPosition;
+        tableCardsParent = GetComponentInParent<TableFormation>();
         cardCollider2D = GetComponent<Collider2D>();
     }
 
@@ -30,6 +29,9 @@ public class CardView : MonoBehaviour
     //    }
     //}
 
+    /// <summary>
+    /// What happens when the player taps on a card
+    /// </summary>
     private void OnMouseDown()
     {
         if (!FindObjectOfType<GameManager>().isPlayerTurn) return;
@@ -37,7 +39,7 @@ public class CardView : MonoBehaviour
         {
             gm.activeHand.RemoveFromHand(this);
         }
-        else
+        else if (gm.activeHand.GetCardAmountInHand() < gm.activeHand.maximumCards)
         {
             gm.activeHand.AddToHand(this);
         }
@@ -52,7 +54,9 @@ public class CardView : MonoBehaviour
     public void AttachCardData(CardData cardData)
     {
         attachedCard = cardData;
+        attachedCard.SetCardView(this);
         attachedCardID = attachedCard.id;
+        name = attachedCard.id;
         switch (attachedCard.color)
         {
             case CardColor.Yellow:
@@ -75,14 +79,25 @@ public class CardView : MonoBehaviour
     {
         if (selected)
         {
-            transform.SetParent(tableCardsParent);
-            transform.localPosition = originalPos;
+            transform.SetParent(tableCardsParent.transform);
+            iTween.MoveTo(gameObject, originalPos, 0.75f);
         }
         else if (gm.activeHand.GetCardAmountInHand() < gm.activeHand.maximumCards)
         {
-            transform.SetParent(gm.activeHand.transform);
+            originalPos = transform.localPosition;
+            RectTransform openSlot = gm.activeHand.FindNextOpenSlot();
+            if (openSlot)
+            {
+                transform.SetParent(openSlot);
+                iTween.MoveTo(gameObject, openSlot.position, 0.75f);
+            }
         }
         else return;
         selected = !selected;
+    }
+
+    public void SetOriginalPosition(Vector3 originalPos)
+    {
+        this.originalPos = originalPos;
     }
 }

@@ -536,3 +536,4 @@ D:\Repos\Very-Important\Shapy Joker\obj\Debug\Assembly-CSharp.csproj.CoreCompile
 D:\Repos\Very-Important\Shapy Joker\obj\Debug\Assembly-CSharp.csproj.CopyComplete
 D:\Repos\Very-Important\Shapy Joker\obj\Debug\Assembly-CSharp.dll
 D:\Repos\Very-Important\Shapy Joker\obj\Debug\Assembly-CSharp.pdb
+D:\Repos\Very-Important\Shapy Joker\Temp\bin\Debug\Assembly-CSharp-firstpass.pdb

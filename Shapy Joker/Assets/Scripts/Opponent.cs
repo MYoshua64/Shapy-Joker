@@ -4,56 +4,76 @@ using UnityEngine;
 
 public class Opponent : MonoBehaviour
 {
+    GameManager gm;
     Hand myHand;
-    CardView[] cardsOnScreen;
+    List<CardVisual> cardsOnScreen = new List<CardVisual>();
     bool isMySetValid = false;
+
+    private void Awake()
+    {
+        gm = FindObjectOfType<GameManager>();
+        myHand = FindObjectOfType<GameManager>().opponentHand;
+    }
 
     public void StartTurn()
     {
-        myHand = FindObjectOfType<GameManager>().opponentHand;
-        cardsOnScreen = FindObjectsOfType<CardView>();
-        SearchForSets();
+        cardsOnScreen = CardVisual.tableCardsParent.GetCardsOnTable();
+        StartCoroutine(SearchForSets());
     }
 
-    void SearchForSets()
+    IEnumerator SearchForSets()
     {
-        myHand.RemoveFromHandAt(0);
-        List<CardView> potentialCards = new List<CardView>();
-        CardView inspectedCard;
-        int randIndex = 0;
         do
         {
-            randIndex = Random.Range(0, cardsOnScreen.Length);
-            inspectedCard = cardsOnScreen[randIndex];
-            potentialCards = FindMatchesIn(inspectedCard.attachedCard, cardsOnScreen);
-        } while (potentialCards.Count < 2);
-        int index = -1;
-        myHand.AddToHand(inspectedCard);
-        CardView checkedCard;
-        do
-        {
-            index++;
-            checkedCard = potentialCards[index];
-            potentialCards = FindMatchesIn(checkedCard.attachedCard, potentialCards);
-        } while (potentialCards.Count < 1 && index < potentialCards.Count);
-        myHand.AddToHand(checkedCard);
-        for (index = 0; index < potentialCards.Count && !isMySetValid; index++)
-        {
-            myHand.RemoveFromHandAt(2);
-            myHand.AddToHand(potentialCards[index]);
-
-        }
+            myHand.RemoveFromHandAt(0, true);
+            List<CardVisual> potentialCards = new List<CardVisual>();
+            CardVisual inspectedCard;
+            int randIndex = 0;
+            do
+            {
+                //Picks a card at random from all 20 cards on the table
+                randIndex = Random.Range(0, cardsOnScreen.Count);
+                inspectedCard = cardsOnScreen[randIndex];
+                //Tries to find cards that have at least TWO shared attributes
+                potentialCards = FindMatchesIn(inspectedCard.attachedCard, cardsOnScreen);
+            } while (potentialCards.Count < 2);
+            myHand.AddToHand(inspectedCard);
+            yield return new WaitForSeconds(0.75f);
+            int index = -1;
+            CardVisual checkedCard;
+            do
+            {
+                index++;
+                //Goes through the generated list of matching cards
+                checkedCard = potentialCards[index];
+                //Tries to find more matching cards to create a set
+                potentialCards = FindMatchesIn(checkedCard.attachedCard, potentialCards);
+            } while (potentialCards.Count < 1 && index < potentialCards.Count);
+            myHand.AddToHand(checkedCard);
+            yield return new WaitForSeconds(0.75f);
+            for (index = 0; index < potentialCards.Count && !isMySetValid; index++)
+            {
+                //This goes through "trial and error" until it finds a set
+                myHand.RemoveFromHandAt(2);
+                myHand.AddToHand(potentialCards[index]);
+            }
+        } while (!isMySetValid);
         myHand.Print();
+        yield return new WaitForSeconds(1.25f);
+        gm.SubmitSet();
     }
 
-    List<CardView> FindMatchesIn(CardData inspectedCard, ICollection collection)
+
+    List<CardVisual> FindMatchesIn(CardData inspectedCard, ICollection collection)
     {
-        List<CardView> potentialCards = new List<CardView>();
-        foreach (CardView comparedCard in collection)
+        List<CardVisual> potentialCards = new List<CardVisual>();
+        foreach (CardVisual comparedCard in collection)
         {
             if (comparedCard.attachedCard == inspectedCard) continue;
             int matches = 0;
-            matches += Compare(comparedCard.attachedCard.color, inspectedCard.color) + Compare(comparedCard.attachedCard.shape, inspectedCard.shape) +
+            //Whenever there is a match in an attribute, the counter goes up by 1
+            matches += Compare(comparedCard.attachedCard.color, inspectedCard.color) + 
+                Compare(comparedCard.attachedCard.shape, inspectedCard.shape) +
                 Compare(comparedCard.attachedCard.number, inspectedCard.number);
             if (matches >= 2 || IsThereJoker(comparedCard.attachedCard, inspectedCard)) potentialCards.Add(comparedCard);
         }
