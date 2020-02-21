@@ -82,7 +82,7 @@ public class Hand : MonoBehaviour
     {
         attachedSet = new Set(cardsInHand);
         attachedSet.CheckSetValidityBySequence();
-        if (FindObjectOfType<GameManager>().isPlayerTurn)
+        if (GameManager.isPlayerTurn)
             FindObjectOfType<GameManager>().SetSubmitButtonInteractable(attachedSet.isSetValid);
         else
             FindObjectOfType<Opponent>().IsSetValid(attachedSet.isSetValid);

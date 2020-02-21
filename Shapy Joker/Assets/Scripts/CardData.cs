@@ -27,6 +27,7 @@ public class CardData
     public CardShape shape { get; private set; }
     public int number { get; private set; } = 0;
     public bool jokerCard { get; private set; }
+    public int index { get; private set; }
 
     public CardData(string cardID)
     {
@@ -76,6 +77,11 @@ public class CardData
     public void SetCardView(CardVisual view)
     {
         cardView = view;
+    }
+
+    public void SetIndex(int index)
+    {
+        this.index = index;
     }
 
     public void Print()

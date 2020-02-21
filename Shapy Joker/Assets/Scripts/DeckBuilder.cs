@@ -37,7 +37,7 @@ public class DeckBuilder : MonoBehaviour
                 int color = (index - 80) / 2 % 4;
                 DetermineStringID(color);
             }
-            CreateCard(preDeck[index]);
+            CreateCard(preDeck[index], index);
         }
         
     }
@@ -101,27 +101,23 @@ public class DeckBuilder : MonoBehaviour
         preDeck.Add(id);
     }
 
-    void CreateCard(string cardID)
+    void CreateCard(string cardID, int index)
     {
         CardData newCard = new CardData(cardID);
+        newCard.SetIndex(index);
         deck.Add(newCard);
     }
 
     void ShuffleDeck()
     {
+        List<CardData> tempDeck = new List<CardData>();
+        tempDeck.AddRange(deck);
         deck.Clear();
-        List<string> tempID = new List<string>();
-        foreach (string id in preDeck)
+        while (tempDeck.Count > 0)
         {
-            tempID.Add(id);
-        }
-        preDeck.Clear();
-        while (tempID.Count > 0)
-        {
-            int index = Random.Range(0, tempID.Count);
-            preDeck.Add(tempID[index]);
-            tempID.RemoveAt(index);
-            CreateCard(preDeck[preDeck.Count - 1]);
+            int index = Random.Range(0, tempDeck.Count);
+            deck.Add(tempDeck[index]);
+            tempDeck.RemoveAt(index);
         }
         currentCardIndex = 0;
     }
@@ -148,8 +144,8 @@ public class DeckBuilder : MonoBehaviour
 
     IEnumerator StartDealing(int numberToDeal)
     {
-        RectTransform activeDeck = gm.isPlayerTurn ? playerDeck : opponentDeck;
-        while (numberToDeal > 0 && !gm.isGameOver)
+        RectTransform activeDeck = GameManager.isPlayerTurn ? playerDeck : opponentDeck;
+        while (numberToDeal > 0 && !GameManager.isGameOver)
         {
             CardVisual newCard = Instantiate(cardViewPF, activeDeck.position, Quaternion.identity, CardVisual.tableCardsParent.transform);
             CardVisual.tableCardsParent.AddToFormation(newCard);

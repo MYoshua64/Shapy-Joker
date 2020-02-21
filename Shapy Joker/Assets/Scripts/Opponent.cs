@@ -39,6 +39,10 @@ public class Opponent : MonoBehaviour
             } while (potentialCards.Count < 2);
             myHand.AddToHand(inspectedCard);
             yield return new WaitForSeconds(0.75f);
+            while (GameManager.gamePaused)
+            {
+                yield return null;
+            }
             int index = -1;
             CardVisual checkedCard;
             do
@@ -51,6 +55,10 @@ public class Opponent : MonoBehaviour
             } while (potentialCards.Count < 1 && index < potentialCards.Count);
             myHand.AddToHand(checkedCard);
             yield return new WaitForSeconds(0.75f);
+            while (GameManager.gamePaused)
+            {
+                yield return null;
+            }
             for (index = 0; index < potentialCards.Count && !isMySetValid; index++)
             {
                 //This goes through "trial and error" until it finds a set
@@ -60,6 +68,10 @@ public class Opponent : MonoBehaviour
         } while (!isMySetValid);
         myHand.Print();
         yield return new WaitForSeconds(1.25f);
+        while (GameManager.gamePaused)
+        {
+            yield return null;
+        }
         gm.SubmitSet();
     }
 

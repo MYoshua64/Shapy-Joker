@@ -10,11 +10,13 @@ public class CardVisual : MonoBehaviour
     public Vector3 originalPos { get; private set; }
     public static TableFormation tableCardsParent;
     public CardData attachedCard { get; private set; }
+    public int attachedCardIndex;
     Collider2D cardCollider2D;
     bool selected = false;
 
     private void Init()
     {
+        attachedCardIndex = attachedCard.index;
         gm = FindObjectOfType<GameManager>();
         tableCardsParent = GetComponentInParent<TableFormation>();
         cardCollider2D = GetComponent<Collider2D>();
@@ -34,7 +36,7 @@ public class CardVisual : MonoBehaviour
     /// </summary>
     private void OnMouseDown()
     {
-        if (!FindObjectOfType<GameManager>().isPlayerTurn) return;
+        if (!GameManager.isPlayerTurn || GameManager.gamePaused) return;
         if (selected)
         {
             gm.activeHand.RemoveFromHand(this);
@@ -57,21 +59,10 @@ public class CardVisual : MonoBehaviour
         attachedCard.SetCardView(this);
         attachedCardID = attachedCard.id;
         name = attachedCard.id;
-        switch (attachedCard.color)
-        {
-            case CardColor.Yellow:
-                GetComponent<SpriteRenderer>().color = Color.yellow;
-                break;
-            case CardColor.Blue:
-                GetComponent<SpriteRenderer>().color = Color.blue;
-                break;
-            case CardColor.Red:
-                GetComponent<SpriteRenderer>().color = Color.red;
-                break;
-            case CardColor.Green:
-                GetComponent<SpriteRenderer>().color = Color.green;
-                break;
-        }
+        //if (attachedCard.index < 20)
+        //{
+        //    GetComponent<Image>().sprite = CanvasManager.visibleSprites[attachedCard.index];
+        //}
         Init();
     }
 

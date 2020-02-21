@@ -16,15 +16,20 @@ public class GameManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI playerDeckText;
     [SerializeField] TextMeshProUGUI opponentDeckText;
     public Hand activeHand { get; private set; }
-    public bool isPlayerTurn { get; private set; } = true;
-    public bool isGameOver { get; private set; } = false;
-    int playerScore = 34, opponentScore = 34;
+    public static bool isPlayerTurn { get; private set; } = true;
+    public static bool isGameOver = false;
+    public int playerScore { get; private set; } = 34;
+    public int opponentScore { get; private set; } = 34;
+    public static bool gamePaused;
+    CanvasManager canvas;
 
     //This will contain the positions of the cards before they are submitted
     public List<Vector3> lastPositions { get; private set; } = new List<Vector3>();
 
     private void Awake()
     {
+        canvas = FindObjectOfType<CanvasManager>();
+        canvas.ChangeBackgroundImage(isPlayerTurn);
         opponent = FindObjectOfType<Opponent>();
         activeHand = isPlayerTurn ? playerHand : opponentHand;
         if (!isPlayerTurn) Invoke("ActivateOpponent", 1f);
@@ -33,6 +38,7 @@ public class GameManager : MonoBehaviour
 
     public void SubmitSet()
     {
+        if (gamePaused) return;
         StartCoroutine(MoveCardsOutOfScreen());
     }
 
@@ -68,6 +74,7 @@ public class GameManager : MonoBehaviour
                 activeHand = opponentHand;
                 Invoke("ActivateOpponent", 1f);
             }
+            canvas.ChangeBackgroundImage(isPlayerTurn);
         }
         else
         {
