@@ -21,7 +21,7 @@ public class CanvasManager : MonoBehaviour
     private void Awake()
     {
         gm = FindObjectOfType<GameManager>();
-        visibleSprites = Resources.LoadAll("Card Sprites", typeof(Sprite)).Cast<Sprite>().ToList();
+        visibleSprites = Resources.LoadAll("Cards", typeof(Sprite)).Cast<Sprite>().ToList();
     }
 
     public void ChangeBackgroundImage(bool isPlayerTurn)

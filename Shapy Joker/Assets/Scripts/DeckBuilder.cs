@@ -27,9 +27,9 @@ public class DeckBuilder : MonoBehaviour
         {
             if (index < 80)
             {
-                int color = index / 5 % 4;
                 int number = index % 5 + 1;
-                int shape = index / 20 % 4;
+                int shape = index / 5 % 4;
+                int color = index / 20 % 4;
                 DetermineStringID(color, shape, number);
             }
             else
@@ -48,31 +48,31 @@ public class DeckBuilder : MonoBehaviour
         switch (color)
         {
             case 0:
-                id += "Y";
+                id += "B";
                 break;
             case 1:
-                id += "B";
+                id += "G";
                 break;
             case 2:
                 id += "R";
                 break;
             case 3:
-                id += "G";
+                id += "Y";
                 break;
         }
         switch (shape)
         {
             case 0:
-                id += "S";
+                id += "C";
                 break;
             case 1:
                 id += "R";
                 break;
             case 2:
-                id += "T";
+                id += "S";
                 break;
             case 3:
-                id += "C";
+                id += "T";
                 break;
         }
         id += number.ToString();

@@ -59,10 +59,10 @@ public class CardVisual : MonoBehaviour
         attachedCard.SetCardView(this);
         attachedCardID = attachedCard.id;
         name = attachedCard.id;
-        //if (attachedCard.index < 20)
-        //{
-        //    GetComponent<Image>().sprite = CanvasManager.visibleSprites[attachedCard.index];
-        //}
+        if (attachedCard.index < 80)
+        {
+            GetComponent<Image>().sprite = CanvasManager.visibleSprites[attachedCard.index];
+        }
         Init();
     }
 
