@@ -7,7 +7,7 @@ public class Hand : MonoBehaviour
     public List<RectTransform> cardSlots = new List<RectTransform>();
     List<CardData> cardsInHand = new List<CardData>();
     public int maximumCards { get; private set; } = 5;
-    Set attachedSet;
+    Group attachedSet;
 
     private void Awake()
     {
@@ -42,18 +42,8 @@ public class Hand : MonoBehaviour
         CheckAttachedSetValidity();
     }
 
-    public void RemoveFromHandAt(int index, bool clear = false)
+    public void RemoveFromHandAt(int index)
     {
-        if (clear)
-        {
-            //Clears the currently held set and returns cards to their places
-            foreach (CardData card in cardsInHand)
-            {
-                card.cardView.HandleSelected();
-            }
-            cardsInHand.Clear();
-            return;
-        }
         //if the index is in the set's bound...
         if (index < cardsInHand.Count)
         {
@@ -65,10 +55,20 @@ public class Hand : MonoBehaviour
         }
     }
 
-    public void RemoveFromHand(CardVisual cardToRemove)
+    public void ClearHand()
+    {
+        //Clears the currently held set and returns cards to their places
+        foreach (CardData card in cardsInHand)
+        {
+            card.cardView.HandleSelected();
+        }
+        cardsInHand.Clear();
+    }
+
+    public void RemoveFromHand(CardVisual cardToRemove, bool submitting = false)
     {
         if (!cardsInHand.Contains(cardToRemove.attachedCard)) return;
-        cardToRemove.HandleSelected();
+        if (!submitting) cardToRemove.HandleSelected();
         cardsInHand.Remove(cardToRemove.attachedCard);
         CheckAttachedSetValidity();
     }
@@ -80,12 +80,27 @@ public class Hand : MonoBehaviour
 
     void CheckAttachedSetValidity()
     {
-        attachedSet = new Set(cardsInHand);
+        attachedSet = new Group(cardsInHand);
         attachedSet.CheckSetValidityBySequence();
         if (GameManager.isPlayerTurn)
-            FindObjectOfType<GameManager>().SetSubmitButtonInteractable(attachedSet.isSetValid);
+            Blackboard.gm.SetSubmitButtonInteractable(attachedSet.isSetValid);
         else
-            FindObjectOfType<Opponent>().IsSetValid(attachedSet.isSetValid);
+            Blackboard.opponent.IsSetValid(attachedSet.isSetValid);
+    }
+
+    public void RefreshCardsPositions()
+    {
+        for (int i = 1; i < cardSlots.Count; i++)
+        {
+            if (cardSlots[i].transform.childCount == 1)
+            {
+                if (cardSlots[i - 1].transform.childCount == 0)
+                {
+                    iTween.MoveTo(cardSlots[i].transform.GetChild(0).gameObject, cardSlots[i - 1].transform.position, 0.75f);
+                    cardSlots[i].transform.GetChild(0).SetParent(cardSlots[i - 1].transform);
+                }
+            }
+        }
     }
 
     public void Print()

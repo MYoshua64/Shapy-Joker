@@ -4,10 +4,11 @@ using UnityEngine;
 
 public class TableFormation : MonoBehaviour
 {
-    List<CardVisual> cardsOnTable = new List<CardVisual>();
+    public List<CardVisual> cardsOnTable { get; private set; } = new List<CardVisual>();
 
     private void Awake()
     {
+        Blackboard.tableCardsParent = this;
         cardsOnTable.AddRange(GetComponentsInChildren<CardVisual>());
     }
 

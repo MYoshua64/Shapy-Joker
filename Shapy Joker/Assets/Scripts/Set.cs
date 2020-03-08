@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System;
 
-public enum SetType
+public enum GroupType
 {
     None,
     NumberColor,
@@ -11,15 +11,15 @@ public enum SetType
     ShapeCons
 }
 
-public class Set
+public class Group
 {
     List<CardData> cardsInSet = new List<CardData>();
     int minimumCardsInSet = 3;
     int maximumCardsInSet = 5;
     public bool isSetValid { get; private set; }
-    public SetType setType { get; private set; }
+    public GroupType groupType { get; private set; }
 
-    public Set(List<CardData> setCards)
+    public Group(List<CardData> setCards)
     {
         cardsInSet.Clear();
         cardsInSet.AddRange(setCards);
@@ -38,7 +38,7 @@ public class Set
             return;
         }
         CheckSequence();
-        isSetValid = setType != SetType.None && JokerCountInSet() < 2;
+        isSetValid = groupType != GroupType.None && JokerCountInSet() < 2;
     }
 
     int JokerCountInSet()
@@ -143,7 +143,7 @@ public class Set
                         unique = cardsInSet[index].shape != cardsInSet[checkedIndex].shape;
                     }
                 }
-                if (unique) setType = SetType.NumberColor;
+                if (unique) groupType = GroupType.NumberColor;
                 break;
             case "sn":
                 //This makes sure there are no two cards of the same color
@@ -154,7 +154,7 @@ public class Set
                         unique = cardsInSet[index].color != cardsInSet[checkedIndex].color;
                     }
                 }
-                if (unique) setType = SetType.ShapeNumber;
+                if (unique) groupType = GroupType.ShapeNumber;
                 break;
             case "cN":
                 //This makes sure there are no two cards of the same shape
@@ -165,7 +165,7 @@ public class Set
                         unique = cardsInSet[index].shape != cardsInSet[checkedIndex].shape;
                     }
                 }
-                if (unique) setType = SetType.ColorCons;
+                if (unique) groupType = GroupType.ColorCons;
                 break;
             case "sN":
                 //This makes sure there are no two cards with the same color
@@ -176,10 +176,10 @@ public class Set
                         unique = cardsInSet[index].color != cardsInSet[checkedIndex].color;
                     }
                 }
-                if (unique) setType = SetType.ShapeCons;
+                if (unique) groupType = GroupType.ShapeCons;
                 break;
             case "scN":
-                setType = SetType.ShapeColorCons;
+                groupType = GroupType.ShapeColorCons;
                 break;
         }
     }

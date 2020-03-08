@@ -9,13 +9,11 @@ public class DeckBuilder : MonoBehaviour
     [SerializeField] CardVisual cardViewPF;
     List<string> preDeck = new List<string>();
     List<CardData> deck = new List<CardData>();
-    CardVisual[] cardsOnScreen;
-    GameManager gm;
+    List<CardVisual> cardsOnScreen;
     int currentCardIndex = 0;
 
     private void Start()
     {
-        gm = FindObjectOfType<GameManager>();
         FillDeck();
         ShuffleDeck();
         AttachCardsToView();
@@ -85,16 +83,16 @@ public class DeckBuilder : MonoBehaviour
         switch (color)
         {
             case 0:
-                id += "Y";
+                id += "B";
                 break;
             case 1:
-                id += "B";
+                id += "G";
                 break;
             case 2:
                 id += "R";
                 break;
             case 3:
-                id += "G";
+                id += "Y";
                 break;
         }
         id += "J";
@@ -124,10 +122,11 @@ public class DeckBuilder : MonoBehaviour
 
     void AttachCardsToView()
     {
-        cardsOnScreen = FindObjectsOfType<CardVisual>();
-        for (; currentCardIndex < cardsOnScreen.Length; currentCardIndex++)
+        cardsOnScreen = Blackboard.tableCardsParent.cardsOnTable;
+        for (; currentCardIndex < cardsOnScreen.Count; currentCardIndex++)
         {
             cardsOnScreen[currentCardIndex].AttachCardData(deck[currentCardIndex]);
+            cardsOnScreen[currentCardIndex].SetOriginalPosition(cardsOnScreen[currentCardIndex].transform.localPosition);
         }
     }
 
@@ -147,16 +146,16 @@ public class DeckBuilder : MonoBehaviour
         RectTransform activeDeck = GameManager.isPlayerTurn ? playerDeck : opponentDeck;
         while (numberToDeal > 0 && !GameManager.isGameOver)
         {
-            CardVisual newCard = Instantiate(cardViewPF, activeDeck.position, Quaternion.identity, CardVisual.tableCardsParent.transform);
-            CardVisual.tableCardsParent.AddToFormation(newCard);
-            newCard.SetOriginalPosition(gm.lastPositions[0]);
-            iTween.MoveTo(newCard.gameObject, gm.lastPositions[0], 0.75f);
-            gm.lastPositions.RemoveAt(0);
+            CardVisual newCard = Instantiate(cardViewPF, activeDeck.position, Quaternion.identity, Blackboard.tableCardsParent.transform);
+            Blackboard.tableCardsParent.AddToFormation(newCard);
+            newCard.SetOriginalPosition(Blackboard.gm.lastPositions[0]);
+            iTween.MoveTo(newCard.gameObject, Blackboard.gm.lastPositions[0], 0.75f);
+            Blackboard.gm.lastPositions.RemoveAt(0);
             AttachCardToView(newCard);
             numberToDeal--;
-            gm.LowerScore();
+            Blackboard.gm.LowerScore();
             yield return new WaitForSeconds(0.3f);
         }
-        gm.HandleTurnEnd();
+        Blackboard.gm.HandleTurnEnd();
     }
 }

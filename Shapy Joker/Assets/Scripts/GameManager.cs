@@ -8,37 +8,46 @@ public class GameManager : MonoBehaviour
 {
     [SerializeField] RectTransform playerWinScreen;
     [SerializeField] RectTransform playerLoseScreen;
-    Opponent opponent;
     [SerializeField] DeckBuilder deck;
     [SerializeField] Hand playerHand;
-    public Hand opponentHand;
     [SerializeField] Button submitButton;
     [SerializeField] TextMeshProUGUI playerDeckText;
     [SerializeField] TextMeshProUGUI opponentDeckText;
+    public Hand opponentHand;
     public Hand activeHand { get; private set; }
     public static bool isPlayerTurn { get; private set; } = true;
     public static bool isGameOver = false;
     public int playerScore { get; private set; } = 34;
     public int opponentScore { get; private set; } = 34;
     public static bool gamePaused;
-    CanvasManager canvas;
 
     //This will contain the positions of the cards before they are submitted
     public List<Vector3> lastPositions { get; private set; } = new List<Vector3>();
 
     private void Awake()
     {
-        canvas = FindObjectOfType<CanvasManager>();
-        canvas.ChangeBackgroundImage(isPlayerTurn);
-        opponent = FindObjectOfType<Opponent>();
+        Blackboard.gm = this;
+        Blackboard.cm.ChangeBackgroundImage(isPlayerTurn);
         activeHand = isPlayerTurn ? playerHand : opponentHand;
         if (!isPlayerTurn) Invoke("ActivateOpponent", 1f);
         playerDeckText.text = opponentDeckText.text = "34";
     }
 
+    public void SetVolume(Slider volumeSlider)
+    {
+        AudioListener.volume = volumeSlider.value;
+        Blackboard.cm.SetAudioImage(volumeSlider.value);
+    }
+
     public void SubmitSet()
     {
         if (gamePaused) return;
+        foreach (RectTransform slot in activeHand.cardSlots)
+        {
+            CardVisual card = slot.GetComponentInChildren<CardVisual>();
+            if (!card) continue;
+            card.SetSubmitted();
+        }
         StartCoroutine(MoveCardsOutOfScreen());
     }
 
@@ -48,12 +57,12 @@ public class GameManager : MonoBehaviour
         foreach (RectTransform slot in activeHand.cardSlots)
         {
             CardVisual card = slot.GetComponentInChildren<CardVisual>();
-            if (!card) break;
+            if (!card) continue;
             lastPositions.Add(card.originalPos);
-            activeHand.RemoveFromHand(card);
-            CardVisual.tableCardsParent.RemoveFromFormation(card);
-            iTween.MoveTo(card.gameObject, new Vector3(-8, 0, 0), 2f);
-            Destroy(card.gameObject, 2f);
+            activeHand.RemoveFromHand(card, true);
+            Blackboard.tableCardsParent.RemoveFromFormation(card);
+            iTween.MoveTo(card.gameObject, new Vector3(12, 0, 0), 2f);
+            Destroy(card.gameObject, 1f);
             yield return new WaitForSeconds(0.2f);
         }
         yield return new WaitForSeconds(0.3f);
@@ -74,7 +83,7 @@ public class GameManager : MonoBehaviour
                 activeHand = opponentHand;
                 Invoke("ActivateOpponent", 1f);
             }
-            canvas.ChangeBackgroundImage(isPlayerTurn);
+            Blackboard.cm.ChangeBackgroundImage(isPlayerTurn);
         }
         else
         {
@@ -111,7 +120,7 @@ public class GameManager : MonoBehaviour
 
     void ActivateOpponent()
     {
-        opponent.StartTurn();
+        Blackboard.opponent.StartTurn();
     }
 
     void HandleGameOver()

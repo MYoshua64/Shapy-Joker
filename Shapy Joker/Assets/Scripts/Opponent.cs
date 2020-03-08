@@ -4,20 +4,19 @@ using UnityEngine;
 
 public class Opponent : MonoBehaviour
 {
-    GameManager gm;
     Hand myHand;
     List<CardVisual> cardsOnScreen = new List<CardVisual>();
     bool isMySetValid = false;
 
     private void Awake()
     {
-        gm = FindObjectOfType<GameManager>();
-        myHand = FindObjectOfType<GameManager>().opponentHand;
+        Blackboard.opponent = this;
+        myHand = Blackboard.gm.opponentHand;
     }
 
     public void StartTurn()
     {
-        cardsOnScreen = CardVisual.tableCardsParent.GetCardsOnTable();
+        cardsOnScreen = Blackboard.tableCardsParent.GetCardsOnTable();
         StartCoroutine(SearchForSets());
     }
 
@@ -25,7 +24,7 @@ public class Opponent : MonoBehaviour
     {
         do
         {
-            myHand.RemoveFromHandAt(0, true);
+            myHand.ClearHand();
             List<CardVisual> potentialCards = new List<CardVisual>();
             CardVisual inspectedCard;
             int randIndex = 0;
@@ -72,7 +71,7 @@ public class Opponent : MonoBehaviour
         {
             yield return null;
         }
-        gm.SubmitSet();
+        Blackboard.gm.SubmitSet();
     }
 
 

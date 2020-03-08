@@ -6,19 +6,16 @@ using UnityEngine.UI;
 public class CardVisual : MonoBehaviour
 {
     [SerializeField] string attachedCardID;
-    GameManager gm;
     public Vector3 originalPos { get; private set; }
-    public static TableFormation tableCardsParent;
     public CardData attachedCard { get; private set; }
     public int attachedCardIndex;
     Collider2D cardCollider2D;
     bool selected = false;
+    bool submitted = false;
 
     private void Init()
     {
         attachedCardIndex = attachedCard.index;
-        gm = FindObjectOfType<GameManager>();
-        tableCardsParent = GetComponentInParent<TableFormation>();
         cardCollider2D = GetComponent<Collider2D>();
     }
 
@@ -36,14 +33,14 @@ public class CardVisual : MonoBehaviour
     /// </summary>
     private void OnMouseDown()
     {
-        if (!GameManager.isPlayerTurn || GameManager.gamePaused) return;
+        if (!GameManager.isPlayerTurn || GameManager.gamePaused || GameManager.isGameOver) return;
         if (selected)
         {
-            gm.activeHand.RemoveFromHand(this);
+            Blackboard.gm.activeHand.RemoveFromHand(this);
         }
-        else if (gm.activeHand.GetCardAmountInHand() < gm.activeHand.maximumCards)
+        else if (Blackboard.gm.activeHand.GetCardAmountInHand() < Blackboard.gm.activeHand.maximumCards)
         {
-            gm.activeHand.AddToHand(this);
+            Blackboard.gm.activeHand.AddToHand(this);
         }
     }
 
@@ -53,30 +50,32 @@ public class CardVisual : MonoBehaviour
         return cardCollider2D.bounds.Contains(touchPos);
     }
 
+    /// <summary>
+    /// This function takes card data and attaches it to the view
+    /// </summary>
+    /// <param name="cardData">The card data to attach to the view</param>
     public void AttachCardData(CardData cardData)
     {
         attachedCard = cardData;
         attachedCard.SetCardView(this);
         attachedCardID = attachedCard.id;
         name = attachedCard.id;
-        if (attachedCard.index < 80)
-        {
-            GetComponent<Image>().sprite = CanvasManager.visibleSprites[attachedCard.index];
-        }
+        int spriteIndex = attachedCard.index < 80 ? attachedCard.index : 80 + (attachedCard.index % 80) / 2;
+        GetComponent<Image>().sprite = CanvasManager.visibleSprites[spriteIndex];
         Init();
     }
 
     public void HandleSelected()
     {
-        if (selected)
+        if (selected && !submitted)
         {
-            transform.SetParent(tableCardsParent.transform);
+            transform.SetParent(Blackboard.tableCardsParent.transform);
             iTween.MoveTo(gameObject, originalPos, 0.75f);
+            Blackboard.gm.activeHand.RefreshCardsPositions();
         }
-        else if (gm.activeHand.GetCardAmountInHand() < gm.activeHand.maximumCards)
+        else if (Blackboard.gm.activeHand.GetCardAmountInHand() < Blackboard.gm.activeHand.maximumCards)
         {
-            originalPos = transform.localPosition;
-            RectTransform openSlot = gm.activeHand.FindNextOpenSlot();
+            RectTransform openSlot = Blackboard.gm.activeHand.FindNextOpenSlot();
             if (openSlot)
             {
                 transform.SetParent(openSlot);
@@ -85,6 +84,11 @@ public class CardVisual : MonoBehaviour
         }
         else return;
         selected = !selected;
+    }
+
+    public void SetSubmitted()
+    {
+        submitted = true;
     }
 
     public void SetOriginalPosition(Vector3 originalPos)

@@ -16,12 +16,19 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] Sprite[] deckDarkImages;
     [SerializeField] Image optionsScreen;
     [SerializeField] Button optionsScreenButton;
-    GameManager gm;
+    [SerializeField] Image volumeImage;
+    [SerializeField] Sprite volumeLight;
+    [SerializeField] Sprite volumeDark;
 
     private void Awake()
     {
-        gm = FindObjectOfType<GameManager>();
+        Blackboard.cm = this;
         visibleSprites = Resources.LoadAll("Cards", typeof(Sprite)).Cast<Sprite>().ToList();
+    }
+
+    public void SetAudioImage(float volume)
+    {
+        volumeImage.sprite = volume <= 0 ? volumeDark : volumeLight;
     }
 
     public void ChangeBackgroundImage(bool isPlayerTurn)
@@ -29,30 +36,31 @@ public class CanvasManager : MonoBehaviour
         backgroundImage.sprite = isPlayerTurn ? playerTurnBG : opponentTurnBG;
         if (isPlayerTurn)
         {
-            if (gm.playerScore / 10 > 1)
+            if (Blackboard.gm.playerScore / 10 > 1)
             {
-                playerDeckImage.sprite = deckLightImages[gm.playerScore / 10 - 1];
+                playerDeckImage.sprite = deckLightImages[Blackboard.gm.playerScore / 10 - 1];
             }
-            if (gm.opponentScore / 10 > 1)
+            if (Blackboard.gm.opponentScore / 10 > 1)
             {
-                opponentDeckImage.sprite = deckDarkImages[gm.opponentScore / 10 - 1];
+                opponentDeckImage.sprite = deckDarkImages[Blackboard.gm.opponentScore / 10 - 1];
             }
         }
         else
         {
-            if (gm.playerScore / 10 > 1)
+            if (Blackboard.gm.playerScore / 10 > 1)
             {
-                playerDeckImage.sprite = deckDarkImages[gm.playerScore / 10 - 1];
+                playerDeckImage.sprite = deckDarkImages[Blackboard.gm.playerScore / 10 - 1];
             }
-            if (gm.opponentScore / 10 > 1)
+            if (Blackboard.gm.opponentScore / 10 > 1)
             {
-                opponentDeckImage.sprite = deckLightImages[gm.opponentScore / 10 - 1];
+                opponentDeckImage.sprite = deckLightImages[Blackboard.gm.opponentScore / 10 - 1];
             }
         }
     }
 
     public void SetOptionsScreenActive(bool value)
     {
+        if (GameManager.isGameOver) return;
         optionsScreenButton.interactable = !value;
         Vector3 newPosition = value ? Vector3.zero : new Vector3(0, 9.24f, 0);
         iTween.MoveTo(optionsScreen.gameObject,  newPosition, 1.5f);
