@@ -6,7 +6,7 @@ public class Opponent : MonoBehaviour
 {
     Hand myHand;
     List<CardVisual> cardsOnScreen = new List<CardVisual>();
-    bool isMySetValid = false;
+    public bool isMySetValid { get; private set; } = false;
 
     private void Awake()
     {
@@ -63,6 +63,7 @@ public class Opponent : MonoBehaviour
                 //This goes through "trial and error" until it finds a set
                 myHand.RemoveFromHandAt(2);
                 myHand.AddToHand(potentialCards[index]);
+                yield return new WaitForSeconds(Time.fixedDeltaTime);
             }
         } while (!isMySetValid);
         myHand.Print();
@@ -106,7 +107,7 @@ public class Opponent : MonoBehaviour
         return Mathf.Abs(a - b) <= 2 ? 1 : 0;
     }
 
-    public void IsSetValid(bool value)
+    public void ConfirmIfSetValid(bool value)
     {
         isMySetValid = value;
     }

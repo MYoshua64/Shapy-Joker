@@ -4,42 +4,39 @@ using UnityEngine;
 
 public class Hand : MonoBehaviour
 {
-    public List<RectTransform> cardSlots = new List<RectTransform>();
-    List<CardData> cardsInHand = new List<CardData>();
+    public List<CardSlot> cardSlots = new List<CardSlot>();
+    public List<CardData> cardsInHand { get; private set; } = new List<CardData>();
     public int maximumCards { get; private set; } = 5;
     Group attachedSet;
 
-    private void Awake()
-    {
-        GetChildSlots();
-    }
-
-    private void GetChildSlots()
-    {
-        RectTransform[] rawComponentArray = GetComponentsInChildren<RectTransform>();
-        cardSlots.AddRange(rawComponentArray);
-        cardSlots.Remove(GetComponent<RectTransform>());
-    }
-
     public RectTransform FindNextOpenSlot()
     {
-        RectTransform openSlot = null;
-        foreach (RectTransform slot in cardSlots)
+        foreach (CardSlot slot in cardSlots)
         {
-            if (slot.childCount == 0)
+            if (slot.open)
             {
-                openSlot = slot;
-                break;
+                return slot.GetComponent<RectTransform>();
             }
         }
-        return openSlot;
+        return null;
     }
 
     public void AddToHand(CardVisual newCard)
     {
-        newCard.HandleSelected();
         cardsInHand.Add(newCard.attachedCard);
         CheckAttachedSetValidity();
+        if (!GameManager.isPlayerTurn)
+        {
+            if (cardsInHand.Count > 2)
+            {
+                if (!Blackboard.opponent.isMySetValid) return;
+            }
+        }
+        foreach (CardData card in cardsInHand)
+        {
+            card.cardView.UpdatePosition();
+        }
+        newCard.HandleSelected();
     }
 
     public void RemoveFromHandAt(int index)
@@ -48,10 +45,15 @@ public class Hand : MonoBehaviour
         if (index < cardsInHand.Count)
         {
             //Remove the card in given index and returns it to its place
-            cardsInHand[index].cardView.HandleSelected();
+            if (cardsInHand[index].cardView.selected)
+                cardsInHand[index].cardView.HandleSelected();
             cardsInHand.RemoveAt(index);
             //And checkes the validity of the set without it
             CheckAttachedSetValidity();
+            foreach (CardData card in cardsInHand)
+            {
+                card.cardView.UpdatePosition();
+            }
         }
     }
 
@@ -60,7 +62,8 @@ public class Hand : MonoBehaviour
         //Clears the currently held set and returns cards to their places
         foreach (CardData card in cardsInHand)
         {
-            card.cardView.HandleSelected();
+            if (card.cardView.selected)
+                card.cardView.HandleSelected();
         }
         cardsInHand.Clear();
     }
@@ -68,8 +71,15 @@ public class Hand : MonoBehaviour
     public void RemoveFromHand(CardVisual cardToRemove, bool submitting = false)
     {
         if (!cardsInHand.Contains(cardToRemove.attachedCard)) return;
-        if (!submitting) cardToRemove.HandleSelected();
         cardsInHand.Remove(cardToRemove.attachedCard);
+        cardToRemove.HandleSelected();
+        if (!submitting)
+        {
+            foreach (CardData card in cardsInHand)
+            {
+                card.cardView.UpdatePosition();
+            }
+        }
         CheckAttachedSetValidity();
     }
 
@@ -85,22 +95,7 @@ public class Hand : MonoBehaviour
         if (GameManager.isPlayerTurn)
             Blackboard.gm.SetSubmitButtonInteractable(attachedSet.isSetValid);
         else
-            Blackboard.opponent.IsSetValid(attachedSet.isSetValid);
-    }
-
-    public void RefreshCardsPositions()
-    {
-        for (int i = 1; i < cardSlots.Count; i++)
-        {
-            if (cardSlots[i].transform.childCount == 1)
-            {
-                if (cardSlots[i - 1].transform.childCount == 0)
-                {
-                    iTween.MoveTo(cardSlots[i].transform.GetChild(0).gameObject, cardSlots[i - 1].transform.position, 0.75f);
-                    cardSlots[i].transform.GetChild(0).SetParent(cardSlots[i - 1].transform);
-                }
-            }
-        }
+            Blackboard.opponent.ConfirmIfSetValid(attachedSet.isSetValid);
     }
 
     public void Print()

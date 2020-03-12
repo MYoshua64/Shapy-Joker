@@ -42,27 +42,31 @@ public class GameManager : MonoBehaviour
     public void SubmitSet()
     {
         if (gamePaused) return;
-        foreach (RectTransform slot in activeHand.cardSlots)
+        isPlayerTurn = !isPlayerTurn;
+        foreach (CardData card in activeHand.cardsInHand)
         {
-            CardVisual card = slot.GetComponentInChildren<CardVisual>();
-            if (!card) continue;
-            card.SetSubmitted();
+            CardVisual _Card = card.cardView;
+            if (!_Card) continue;
+            _Card.SetSubmitted();
         }
+        CardVisual.currentHighSortingOrder = 10;
         StartCoroutine(MoveCardsOutOfScreen());
     }
 
     IEnumerator MoveCardsOutOfScreen()
     {
         lastPositions.Clear();
-        foreach (RectTransform slot in activeHand.cardSlots)
+        List<CardData> repCards = new List<CardData>();
+        repCards.AddRange(activeHand.cardsInHand);
+        foreach (CardData card in repCards)
         {
-            CardVisual card = slot.GetComponentInChildren<CardVisual>();
-            if (!card) continue;
-            lastPositions.Add(card.originalPos);
-            activeHand.RemoveFromHand(card, true);
-            Blackboard.tableCardsParent.RemoveFromFormation(card);
-            iTween.MoveTo(card.gameObject, new Vector3(12, 0, 0), 2f);
-            Destroy(card.gameObject, 1f);
+            CardVisual _Card = card.cardView;
+            if (!_Card) continue;
+            lastPositions.Add(_Card.originalPos);
+            activeHand.RemoveFromHand(_Card, true);
+            Blackboard.tableCardsParent.RemoveFromFormation(_Card);
+            iTween.MoveTo(_Card.gameObject, new Vector3(12, 0, 0), 2f);
+            Destroy(_Card.gameObject, 1f);
             yield return new WaitForSeconds(0.2f);
         }
         yield return new WaitForSeconds(0.3f);
@@ -73,7 +77,6 @@ public class GameManager : MonoBehaviour
     {
         if (!isGameOver)
         {
-            isPlayerTurn = !isPlayerTurn;
             if (isPlayerTurn)
             {
                 activeHand = playerHand;
