@@ -121,8 +121,11 @@ public class Group
             numberCon = true;
             for (int index = 0; index < cardsInSet.Count - 1 && numberCon; index++)
             {
-                bool jokerInPair = cardsInSet[index].jokerCard || cardsInSet[index + 1].jokerCard;
-                numberCon = cardsInSet[index + 1].number - cardsInSet[index].number == 1 || jokerInPair;
+                for (int checkedIndex = index + 1; checkedIndex < cardsInSet.Count && numberCon; checkedIndex++)
+                {
+                    bool jokerInPair = cardsInSet[index].jokerCard || cardsInSet[checkedIndex].jokerCard;
+                    numberCon = Math.Abs(cardsInSet[index].number - cardsInSet[checkedIndex].number) == Math.Abs(index - checkedIndex) || jokerInPair;
+                }
             }
         }
         //Building the string reference according to the matches found

@@ -19,6 +19,9 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] Image volumeImage;
     [SerializeField] Sprite volumeLight;
     [SerializeField] Sprite volumeDark;
+    [SerializeField] Image timerImage;
+    [SerializeField] Sprite timerLight;
+    [SerializeField] Sprite timerDark;
 
     private void Awake()
     {
@@ -65,5 +68,10 @@ public class CanvasManager : MonoBehaviour
         Vector3 newPosition = value ? Vector3.zero : new Vector3(0, 9.24f, 0);
         iTween.MoveTo(optionsScreen.gameObject,  newPosition, 1.5f);
         GameManager.gamePaused = value;
+    }
+
+    public void ToggleTimerIcon(bool value)
+    {
+        timerImage.sprite = value ? timerLight : timerDark;
     }
 }

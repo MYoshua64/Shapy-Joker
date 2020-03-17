@@ -11,4 +11,9 @@ public class SceneLoader : MonoBehaviour
         GameManager.isGameOver = false;
         SceneManager.LoadScene(index);
     }
+
+    public void ExitGame()
+    {
+        Application.Quit();
+    }
 }

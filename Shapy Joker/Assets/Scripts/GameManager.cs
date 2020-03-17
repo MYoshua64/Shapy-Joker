@@ -20,6 +20,7 @@ public class GameManager : MonoBehaviour
     public int playerScore { get; private set; } = 34;
     public int opponentScore { get; private set; } = 34;
     public static bool gamePaused;
+    public bool timerOn { get; private set; } = false;
 
     //This will contain the positions of the cards before they are submitted
     public List<Vector3> lastPositions { get; private set; } = new List<Vector3>();
@@ -42,6 +43,7 @@ public class GameManager : MonoBehaviour
     public void SubmitSet()
     {
         if (gamePaused) return;
+        submitButton.interactable = false;
         isPlayerTurn = !isPlayerTurn;
         foreach (CardData card in activeHand.cardsInHand)
         {
@@ -90,20 +92,13 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            if (playerScore <= 0)
-            {
-                playerWinScreen.gameObject.SetActive(true);
-            }
-            else if (opponentScore <= 0)
-            {
-                playerLoseScreen.gameObject.SetActive(true);
-            }
+            HandleGameOver();
         }
     }
 
     public void LowerScore()
     {
-        if (isPlayerTurn)
+        if (!isPlayerTurn)
         {
             playerScore--;
             playerDeckText.text = playerScore.ToString();
@@ -128,6 +123,19 @@ public class GameManager : MonoBehaviour
 
     void HandleGameOver()
     {
+        if (playerScore <= 0)
+        {
+            playerWinScreen.gameObject.SetActive(true);
+        }
+        else if (opponentScore <= 0)
+        {
+            playerLoseScreen.gameObject.SetActive(true);
+        }
+    }
 
+    public void SetTimerOnOff()
+    {
+        timerOn = !timerOn;
+        Blackboard.cm.ToggleTimerIcon(timerOn);
     }
 }

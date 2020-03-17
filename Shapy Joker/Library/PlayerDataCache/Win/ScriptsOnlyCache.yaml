@@ -309,7 +309,7 @@ ScriptsOnlyBuild:
     className: PhysicsRaycaster
   - hash:
       serializedVersion: 2
-      Hash: 4ce402e5b0af1e20e23b8528b26a6752
+      Hash: 5af315923aa6a3803bc945b97d9c7f96
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: CanvasManager
