@@ -143,8 +143,8 @@ public class DeckBuilder : MonoBehaviour
 
     IEnumerator StartDealing(int numberToDeal)
     {
-        RectTransform activeDeck = GameManager.isPlayerTurn ? opponentDeck : playerDeck;
-        while (numberToDeal > 0 && !GameManager.isGameOver)
+        RectTransform activeDeck = Blackboard.gm.isPlayerTurn ? opponentDeck : playerDeck;
+        while (numberToDeal > 0 && !Blackboard.gm.isGameOver)
         {
             CardVisual newCard = Instantiate(cardViewPF, activeDeck.position, Quaternion.identity, Blackboard.tableCardsParent.transform);
             Blackboard.tableCardsParent.AddToFormation(newCard);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
+using TMPro;
 
 public class CanvasManager : MonoBehaviour
 {
@@ -22,6 +23,10 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] Image timerImage;
     [SerializeField] Sprite timerLight;
     [SerializeField] Sprite timerDark;
+    [SerializeField] TextMeshProUGUI playerTimerText;
+    [SerializeField] TextMeshProUGUI opponentTimerText;
+    [SerializeField] Image timeUpImage;
+    private bool startedFlashing = false;
 
     private void Awake()
     {
@@ -63,7 +68,7 @@ public class CanvasManager : MonoBehaviour
 
     public void SetOptionsScreenActive(bool value)
     {
-        if (GameManager.isGameOver) return;
+        if (Blackboard.gm.isGameOver) return;
         optionsScreenButton.interactable = !value;
         Vector3 newPosition = value ? Vector3.zero : new Vector3(0, 9.24f, 0);
         iTween.MoveTo(optionsScreen.gameObject,  newPosition, 1.5f);
@@ -73,5 +78,28 @@ public class CanvasManager : MonoBehaviour
     public void ToggleTimerIcon(bool value)
     {
         timerImage.sprite = value ? timerLight : timerDark;
+    }
+
+    public void UpdateTimerText(float counter)
+    {
+        string timerText = (int)counter / 60 + ":" + (counter % 60 < 10 ? "0" + (counter % 60).ToString() : (counter % 60).ToString());
+        TextMeshProUGUI activeTimer = Blackboard.gm.isPlayerTurn ? playerTimerText : opponentTimerText;
+        if (counter <= 5)
+        {
+            if (!startedFlashing)
+            {
+                startedFlashing = true;
+                iTween.FadeTo(activeTimer.gameObject, iTween.Hash("alpha", 0, "time", 0.25f, "looptype", iTween.LoopType.pingPong));
+            }
+            activeTimer.color = Color.red;
+        }
+        else activeTimer.color = Color.white;
+        activeTimer.text = timerText;
+    }
+
+    public void ShowTimeUpMessage()
+    {
+        timeUpImage.gameObject.SetActive(true);
+        iTween.FadeTo(timeUpImage.gameObject, iTween.Hash("alpha", 0, "time", 1f, "delay", 1f));
     }
 }

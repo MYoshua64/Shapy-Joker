@@ -8,4 +8,5 @@ public static class Blackboard
     public static CanvasManager cm;
     public static TableFormation tableCardsParent;
     public static Opponent opponent;
+    public static Timer timer;
 }

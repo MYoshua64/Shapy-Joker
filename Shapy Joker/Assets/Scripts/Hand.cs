@@ -25,7 +25,7 @@ public class Hand : MonoBehaviour
     {
         cardsInHand.Add(newCard.attachedCard);
         CheckAttachedSetValidity();
-        if (!GameManager.isPlayerTurn)
+        if (!Blackboard.gm.isPlayerTurn)
         {
             if (cardsInHand.Count > 2)
             {
@@ -92,7 +92,7 @@ public class Hand : MonoBehaviour
     {
         attachedSet = new Group(cardsInHand);
         attachedSet.CheckSetValidityBySequence();
-        if (GameManager.isPlayerTurn)
+        if (Blackboard.gm.isPlayerTurn)
             Blackboard.gm.SetSubmitButtonInteractable(attachedSet.isSetValid);
         else
             Blackboard.opponent.ConfirmIfSetValid(attachedSet.isSetValid);

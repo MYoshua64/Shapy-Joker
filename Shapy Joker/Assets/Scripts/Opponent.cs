@@ -42,17 +42,18 @@ public class Opponent : MonoBehaviour
             {
                 yield return null;
             }
+            List<CardVisual> matches = new List<CardVisual>();
+            matches.AddRange(potentialCards);
             int index = -1;
-            CardVisual checkedCard;
             do
             {
                 index++;
                 //Goes through the generated list of matching cards
-                checkedCard = potentialCards[index];
+                inspectedCard = matches[index];
                 //Tries to find more matching cards to create a set
-                potentialCards = FindMatchesIn(checkedCard.attachedCard, potentialCards);
+                potentialCards = FindMatchesIn(inspectedCard.attachedCard, matches);
             } while (potentialCards.Count < 1 && index < potentialCards.Count);
-            myHand.AddToHand(checkedCard);
+            myHand.AddToHand(inspectedCard);
             yield return new WaitForSeconds(0.75f);
             while (GameManager.gamePaused)
             {

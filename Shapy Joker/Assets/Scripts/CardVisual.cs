@@ -34,7 +34,7 @@ public class CardVisual : MonoBehaviour
     /// </summary>
     private void OnMouseDown()
     {
-        if (!GameManager.isPlayerTurn || GameManager.gamePaused || GameManager.isGameOver) return;
+        if (!Blackboard.gm.isPlayerTurn || GameManager.gamePaused || Blackboard.gm.isGameOver) return;
         if (selected)
         {
             Blackboard.gm.activeHand.RemoveFromHand(this);
@@ -79,7 +79,7 @@ public class CardVisual : MonoBehaviour
                 slot.SetParent(null);
             }
         }
-        else if (Blackboard.gm.activeHand.GetCardAmountInHand() < Blackboard.gm.activeHand.maximumCards)
+        else if (Blackboard.gm.activeHand.GetCardAmountInHand() <= Blackboard.gm.activeHand.maximumCards)
         {
             slot = Blackboard.gm.activeHand.FindNextOpenSlot();
             if (slot)

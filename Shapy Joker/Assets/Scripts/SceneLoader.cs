@@ -8,7 +8,7 @@ public class SceneLoader : MonoBehaviour
     public void GoToScene(int index)
     {
         GameManager.gamePaused = false;
-        GameManager.isGameOver = false;
+        Blackboard.gm.isGameOver = false;
         SceneManager.LoadScene(index);
     }
 

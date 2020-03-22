@@ -15,8 +15,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI opponentDeckText;
     public Hand opponentHand;
     public Hand activeHand { get; private set; }
-    public static bool isPlayerTurn { get; private set; } = true;
-    public static bool isGameOver = false;
+    public bool isPlayerTurn { get; private set; } = true;
+    public bool isGameOver = false;
     public int playerScore { get; private set; } = 34;
     public int opponentScore { get; private set; } = 34;
     public static bool gamePaused;
@@ -44,6 +44,7 @@ public class GameManager : MonoBehaviour
     {
         if (gamePaused) return;
         submitButton.interactable = false;
+        Blackboard.timer.Stop();
         isPlayerTurn = !isPlayerTurn;
         foreach (CardData card in activeHand.cardsInHand)
         {
@@ -75,8 +76,13 @@ public class GameManager : MonoBehaviour
         deck.DealNewCards(lastPositions.Count);
     }
 
-    public void HandleTurnEnd()
+    public void HandleTurnEnd(bool timeUp = false)
     {
+        if (timeUp)
+        {
+            Blackboard.cm.ShowTimeUpMessage();
+            isPlayerTurn = !isPlayerTurn;
+        }
         if (!isGameOver)
         {
             if (isPlayerTurn)
@@ -89,6 +95,7 @@ public class GameManager : MonoBehaviour
                 Invoke("ActivateOpponent", 1f);
             }
             Blackboard.cm.ChangeBackgroundImage(isPlayerTurn);
+            Blackboard.timer.Run();
         }
         else
         {
@@ -137,5 +144,7 @@ public class GameManager : MonoBehaviour
     {
         timerOn = !timerOn;
         Blackboard.cm.ToggleTimerIcon(timerOn);
+        if (timerOn) Blackboard.timer.Run();
+        else Blackboard.timer.Stop();
     }
 }
