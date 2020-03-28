@@ -5,8 +5,8 @@ using UnityEngine;
 public class Timer : MonoBehaviour
 {
     [Tooltip("Turn time in minutes")]
-    [SerializeField] [Range(1, 5)] float turnTime;
-    float timeCountDown;
+    [SerializeField] float turnTime;
+    public float timeCountDown { get; private set; }
     bool running = false;
 
     private void Awake()
@@ -29,8 +29,7 @@ public class Timer : MonoBehaviour
     {
         if (!running || GameManager.gamePaused) return;
         timeCountDown -= Time.deltaTime;
-        float counter = Mathf.Ceil(timeCountDown);
-        Blackboard.cm.UpdateTimerText(counter);
+        Blackboard.cm.UpdateTimerText();
         if (timeCountDown <= 0)
         {
             Stop();

@@ -43,8 +43,9 @@ public class GameManager : MonoBehaviour
     public void SubmitSet()
     {
         if (gamePaused) return;
+        Blackboard.sfxPlayer.PlaySubmitSFX();
         submitButton.interactable = false;
-        Blackboard.timer.Stop();
+        if (timerOn) Blackboard.timer.Stop();
         isPlayerTurn = !isPlayerTurn;
         foreach (CardData card in activeHand.cardsInHand)
         {
@@ -80,8 +81,9 @@ public class GameManager : MonoBehaviour
     {
         if (timeUp)
         {
+            submitButton.interactable = false;
             Blackboard.cm.ShowTimeUpMessage();
-            isPlayerTurn = !isPlayerTurn;
+            ReturnCards();
         }
         if (!isGameOver)
         {
@@ -95,12 +97,24 @@ public class GameManager : MonoBehaviour
                 Invoke("ActivateOpponent", 1f);
             }
             Blackboard.cm.ChangeBackgroundImage(isPlayerTurn);
-            Blackboard.timer.Run();
+            if (timerOn) Blackboard.timer.Run();
         }
         else
         {
             HandleGameOver();
         }
+    }
+
+    private void ReturnCards()
+    {
+        int cardsCount = activeHand.cardsInHand.Count;
+        for (int iter = 0; iter < cardsCount; iter++)
+        {
+            CardVisual _Card = activeHand.cardsInHand[0].cardView;
+            if (!_Card) continue;
+            activeHand.RemoveFromHand(_Card, true);
+        }
+        isPlayerTurn = !isPlayerTurn;
     }
 
     public void LowerScore()

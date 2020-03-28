@@ -149,7 +149,8 @@ public class DeckBuilder : MonoBehaviour
             CardVisual newCard = Instantiate(cardViewPF, activeDeck.position, Quaternion.identity, Blackboard.tableCardsParent.transform);
             Blackboard.tableCardsParent.AddToFormation(newCard);
             newCard.SetOriginalPosition(Blackboard.gm.lastPositions[0]);
-            iTween.MoveTo(newCard.gameObject, Blackboard.gm.lastPositions[0], 0.75f);
+            iTween.MoveTo(newCard.gameObject, iTween.Hash("position", Blackboard.gm.lastPositions[0], "time", 0.75f,
+                "oncompletetarget", Blackboard.sfxPlayer.gameObject, "oncomplete", "PlaySFX", "oncompleteparameters", false));
             Blackboard.gm.lastPositions.RemoveAt(0);
             AttachCardToView(newCard);
             numberToDeal--;

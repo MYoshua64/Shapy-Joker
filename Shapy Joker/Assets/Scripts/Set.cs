@@ -21,8 +21,7 @@ public class Group
 
     public Group(List<CardData> setCards)
     {
-        cardsInSet.Clear();
-        cardsInSet.AddRange(setCards);
+        cardsInSet = setCards;
     }
 
     public bool IsFull()
@@ -146,7 +145,7 @@ public class Group
                         unique = cardsInSet[index].shape != cardsInSet[checkedIndex].shape;
                     }
                 }
-                if (unique) groupType = GroupType.NumberColor;
+                if (unique && cardsInSet.Count < 5) groupType = GroupType.NumberColor;
                 break;
             case "sn":
                 //This makes sure there are no two cards of the same color

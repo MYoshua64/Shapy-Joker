@@ -41,7 +41,7 @@ public class CardVisual : MonoBehaviour
         }
         else if (Blackboard.gm.activeHand.GetCardAmountInHand() < Blackboard.gm.activeHand.maximumCards)
         {
-            Blackboard.gm.activeHand.AddToHand(this);
+            Blackboard.gm.activeHand.AddToHand(this, true);
         }
     }
 
@@ -74,9 +74,10 @@ public class CardVisual : MonoBehaviour
             if (!submitted)
             {
                 transform.SetParent(Blackboard.tableCardsParent.transform);
-                iTween.MoveTo(gameObject, iTween.Hash("position", originalPos, "time", 0.75f, "oncompletetarget", gameObject, "oncomplete", "SetSortingOrder", 
+                iTween.MoveTo(gameObject, iTween.Hash("position", originalPos, "time", 0.75f, "oncompletetarget", gameObject, "oncomplete", "SetSortingOrder",
                     "oncompleteparams", 5));
                 slot.SetParent(null);
+                Blackboard.sfxPlayer.PlayCardSFX(false);
             }
         }
         else if (Blackboard.gm.activeHand.GetCardAmountInHand() <= Blackboard.gm.activeHand.maximumCards)
@@ -89,6 +90,7 @@ public class CardVisual : MonoBehaviour
                 currentHighSortingOrder++;
                 UpdatePosition();
                 slot.GetComponent<CardSlot>().open = false;
+                Blackboard.sfxPlayer.PlayCardSFX(true);
             }
         }
         else return;
@@ -118,6 +120,7 @@ public class CardVisual : MonoBehaviour
 
     void MoveToSlot()
     {
+        if (!slot) return;
         if (transform.position != slot.position) iTween.MoveTo(gameObject, slot.position, 0.75f);
     }
 }

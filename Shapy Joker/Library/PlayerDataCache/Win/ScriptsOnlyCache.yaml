@@ -9,7 +9,9 @@ ScriptsOnlyBuild:
     - Hand
     - Opponent
     - SceneLoader
+    - SoundPlayer
     - TableFormation
+    - Timer
     Unity.TextMeshPro.dll:
     - TMPro.TMP_FontAsset
     - TMPro.TMP_Settings
@@ -53,6 +55,8 @@ ScriptsOnlyBuild:
       Script: {instanceID: 0}
     - Class: 81
       Script: {instanceID: 0}
+    - Class: 83
+      Script: {instanceID: 0}
     - Class: 104
       Script: {instanceID: 0}
     - Class: 114
@@ -92,9 +96,13 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 11250}
     - Class: 114
-      Script: {instanceID: 11398}
+      Script: {instanceID: 11314}
     - Class: 114
-      Script: {instanceID: 11430}
+      Script: {instanceID: 11400}
+    - Class: 114
+      Script: {instanceID: 11432}
+    - Class: 114
+      Script: {instanceID: 20430}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -153,7 +161,7 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 11202}
     - Class: 114
-      Script: {instanceID: 11398}
+      Script: {instanceID: 11400}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -291,7 +299,7 @@ ScriptsOnlyBuild:
     className: SignalAsset
   - hash:
       serializedVersion: 2
-      Hash: 3652a3ac35111f4eac7435625936baa1
+      Hash: 06911db5252f5a48de70865af4c37987
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: GameManager
@@ -309,7 +317,7 @@ ScriptsOnlyBuild:
     className: PhysicsRaycaster
   - hash:
       serializedVersion: 2
-      Hash: 5af315923aa6a3803bc945b97d9c7f96
+      Hash: d31c316c447eeb4596296cbbb8770b42
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: CanvasManager
@@ -585,6 +593,12 @@ ScriptsOnlyBuild:
     className: TMP_ColorGradient
   - hash:
       serializedVersion: 2
+      Hash: b40476c024dd73c904e76f36fc7036f7
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: Timer
+  - hash:
+      serializedVersion: 2
       Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
     assemblyName: UnityEngine.TestRunner.dll
     namespaceName: UnityEngine.TestTools.TestRunner.Callbacks
@@ -661,6 +675,12 @@ ScriptsOnlyBuild:
     assemblyName: Unity.Timeline.dll
     namespaceName: UnityEngine.Timeline
     className: PlayableTrack
+  - hash:
+      serializedVersion: 2
+      Hash: 00b1f1a32105c64b3ac7d72f1ec00e1a
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: SoundPlayer
   platform: 5
   scenePathNames:
   - Assets/Scenes/Splash Screen.unity

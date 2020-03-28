@@ -21,10 +21,13 @@ public class Hand : MonoBehaviour
         return null;
     }
 
-    public void AddToHand(CardVisual newCard)
+    public void AddToHand(CardVisual newCard, bool picking = false)
     {
-        cardsInHand.Add(newCard.attachedCard);
-        CheckAttachedSetValidity();
+        if (!cardsInHand.Contains(newCard.attachedCard))
+        {
+            cardsInHand.Add(newCard.attachedCard);
+            CheckAttachedSetValidity();
+        }
         if (!Blackboard.gm.isPlayerTurn)
         {
             if (cardsInHand.Count > 2)
@@ -36,7 +39,8 @@ public class Hand : MonoBehaviour
         {
             card.cardView.UpdatePosition();
         }
-        newCard.HandleSelected();
+        if (picking)
+            newCard.HandleSelected();
     }
 
     public void RemoveFromHandAt(int index)
@@ -45,7 +49,7 @@ public class Hand : MonoBehaviour
         if (index < cardsInHand.Count)
         {
             //Remove the card in given index and returns it to its place
-            if (cardsInHand[index].cardView.selected)
+            if (cardsInHand[index].cardView.selected && Blackboard.gm.isPlayerTurn)
                 cardsInHand[index].cardView.HandleSelected();
             cardsInHand.RemoveAt(index);
             //And checkes the validity of the set without it
@@ -80,7 +84,7 @@ public class Hand : MonoBehaviour
                 card.cardView.UpdatePosition();
             }
         }
-        CheckAttachedSetValidity();
+        CheckAttachedSetValidity(submitting);
     }
 
     public int GetCardAmountInHand()
@@ -88,21 +92,27 @@ public class Hand : MonoBehaviour
         return cardsInHand.Count;
     }
 
-    void CheckAttachedSetValidity()
+    void CheckAttachedSetValidity(bool submitting = false)
     {
         attachedSet = new Group(cardsInHand);
         attachedSet.CheckSetValidityBySequence();
-        if (Blackboard.gm.isPlayerTurn)
+        if (Blackboard.gm.isPlayerTurn && !submitting)
             Blackboard.gm.SetSubmitButtonInteractable(attachedSet.isSetValid);
         else
             Blackboard.opponent.ConfirmIfSetValid(attachedSet.isSetValid);
     }
 
-    public void Print()
+    public GroupType GetHandGroupType()
+    {
+        return attachedSet.groupType;
+    }
+
+    public bool ContainsJoker()
     {
         foreach (CardData card in cardsInHand)
         {
-            card.Print();
+            if (card.jokerCard) return true;
         }
+        return false;
     }
 }

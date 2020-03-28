@@ -12,11 +12,11 @@ public enum CardColor
 
 public enum CardShape
 {
-    Joker,
-    Star,
-    Rectangle,
-    Triangle,
-    Circle
+    Joker = 4,
+    Star = 0,
+    Rectangle = 1,
+    Triangle = 2,
+    Circle = 3
 }
 
 public class CardData
@@ -31,6 +31,7 @@ public class CardData
 
     public CardData(string cardID)
     {
+        shape = CardShape.Joker;
         //Determining color attribute
         id = cardID.ToUpper();
         switch (id[0])

@@ -9,4 +9,6 @@ public static class Blackboard
     public static TableFormation tableCardsParent;
     public static Opponent opponent;
     public static Timer timer;
+    public static SoundPlayer sfxPlayer;
+    public static SceneLoader sceneLoader;
 }
