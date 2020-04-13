@@ -36,6 +36,4 @@ public class Timer : MonoBehaviour
             Blackboard.gm.HandleTurnEnd(true);
         }
     }
-
-
 }

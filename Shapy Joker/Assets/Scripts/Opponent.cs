@@ -6,6 +6,7 @@ public class Opponent : MonoBehaviour
 {
     Hand myHand;
     List<CardVisual> cardsOnScreen = new List<CardVisual>();
+    List<List<CardData>> possibleGroups;
     public bool isMySetValid { get; private set; } = false;
 
     private void Awake()
@@ -22,16 +23,19 @@ public class Opponent : MonoBehaviour
 
     IEnumerator SearchForSets()
     {
+        isMySetValid = false;
+        possibleGroups = new List<List<CardData>>();
         int cardIndex = -1;
         do
         {
             cardIndex++;
             myHand.ClearHand();
+            if (cardIndex >= cardsOnScreen.Count) break;
             List<CardVisual> potentialCards = new List<CardVisual>();
             CardVisual inspectedCard;
             do
             {
-                //Picks a card at random from all 20 cards on the table
+                //Picks a card from all 20 cards on the table
                 inspectedCard = cardsOnScreen[cardIndex];
                 //Tries to find cards that have at least TWO shared attributes
                 potentialCards = FindMatchesIn(inspectedCard.attachedCard, cardsOnScreen);
@@ -64,14 +68,20 @@ public class Opponent : MonoBehaviour
                 myHand.AddToHand(potentialCards[index]);
                 yield return new WaitForSeconds(Time.fixedDeltaTime);
             }
-        } while (!isMySetValid && cardIndex < cardsOnScreen.Count);
-        if (myHand.cardsInHand.Count < 3)
+        } while (!isMySetValid);
+        if (!isMySetValid)
         {
-            Debug.LogError("No sets found on screen!");
+            myHand.ClearHand();
+            Blackboard.gm.HandleTurnEnd();
             yield break;
         }
         string neededCard = CalculateNeededCard();
         SearchForCardWithID(neededCard);
+        if (myHand.cardsInHand.Count > 3)
+        {
+            neededCard = CalculateNeededCard();
+            SearchForCardWithID(neededCard);
+        }
         foreach (CardData card in myHand.cardsInHand)
         {
             myHand.AddToHand(card.cardView, true);

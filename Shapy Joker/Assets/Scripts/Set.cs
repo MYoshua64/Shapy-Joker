@@ -37,7 +37,7 @@ public class Group
             return;
         }
         CheckSequence();
-        isSetValid = groupType != GroupType.None && JokerCountInSet() < 2;
+        isSetValid = groupType != GroupType.None;
     }
 
     int JokerCountInSet()
@@ -52,7 +52,7 @@ public class Group
 
     void RearrangeCardsInSetByNumber()
     {
-        int offset = FindSmallestNumberInSet();
+        int offset = FindLowestNumberInSet();
         for (int index = 0; index < cardsInSet.Count;)
         {
             CardData card = cardsInSet[index];
@@ -74,7 +74,7 @@ public class Group
         }
     }
 
-    int FindSmallestNumberInSet()
+    int FindLowestNumberInSet()
     {
         int offset = 6;
         for (int i = 0; i < cardsInSet.Count; i++)
@@ -97,6 +97,11 @@ public class Group
     /// </summary>
     void CheckSequence()
     {
+        if (JokerCountInSet() >= 2)
+        {
+            groupType = GroupType.None;
+            return;
+        }
         string setDeter = "";
         bool shape = true, number = true, color = true, numberCon = false;
         //comparing each card to the others in the set to check for any matches

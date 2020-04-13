@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] DeckBuilder deck;
     [SerializeField] Hand playerHand;
     [SerializeField] Button submitButton;
+    [SerializeField] Button badCheckButton;
     [SerializeField] TextMeshProUGUI playerDeckText;
     [SerializeField] TextMeshProUGUI opponentDeckText;
     public Hand opponentHand;
@@ -62,15 +63,33 @@ public class GameManager : MonoBehaviour
         lastPositions.Clear();
         List<CardData> repCards = new List<CardData>();
         repCards.AddRange(activeHand.cardsInHand);
-        foreach (CardData card in repCards)
+        for (int i = 0; i < repCards.Count; i++)
         {
-            CardVisual _Card = card.cardView;
+            CardVisual _Card = repCards[i].cardView;
             if (!_Card) continue;
             lastPositions.Add(_Card.originalPos);
             activeHand.RemoveFromHand(_Card, true);
             Blackboard.tableCardsParent.RemoveFromFormation(_Card);
-            iTween.MoveTo(_Card.gameObject, new Vector3(12, 0, 0), 2f);
-            Destroy(_Card.gameObject, 1f);
+        }
+        yield return new WaitForSeconds(0.1f);
+        for (int j = 0; j < repCards.Count; j++)
+        {
+            CardVisual _Card = repCards[j].cardView;
+            Transform selectedSlot = Blackboard.cm.backgroundSettings.submitPanel.GetChild(repCards.Count - 1 - j);
+            float zAngle = repCards.Count % 2 == 1 ? 15 * (repCards.Count / 2) - 15 * j : 22.5f - 15 * j;
+            float yPos = repCards.Count % 2 == 1 ? -0.16f * Mathf.Pow(j - repCards.Count / 2, 2) : -0.3f * (0.5f * Mathf.Pow(j, 2) - 1.5f * j + 1);
+            Vector3 cardPosition = new Vector3(selectedSlot.position.x, yPos, selectedSlot.position.z);
+            iTween.MoveTo(_Card.gameObject, iTween.Hash("position", cardPosition, "time", 0.5f, "easetype", iTween.EaseType.spring));
+            iTween.ScaleTo(_Card.gameObject, iTween.Hash("scale", 2 * Vector3.one, "time", 0.5f));
+            iTween.RotateTo(_Card.gameObject, iTween.Hash("rotation", zAngle * Vector3.forward, "time", 0.5f));
+        }
+        yield return new WaitForSeconds(1.5f);
+        for (int i = 0; i < repCards.Count; i++)
+        {
+            CardVisual _Card = repCards[repCards.Count - 1 - i].cardView;
+            iTween.MoveTo(_Card.gameObject, iTween.Hash("position", 12 * Vector3.right, "time", 1.5f));
+            Destroy(_Card.gameObject, 1.5f);
+            activeHand.cardSlots[i].transform.SetParent(Blackboard.cm.transform);
             yield return new WaitForSeconds(0.2f);
         }
         yield return new WaitForSeconds(0.3f);
@@ -79,6 +98,7 @@ public class GameManager : MonoBehaviour
 
     public void HandleTurnEnd(bool timeUp = false)
     {
+        if (timerOn) Blackboard.cm.ToggleNameActive(isPlayerTurn);
         if (timeUp)
         {
             submitButton.interactable = false;
@@ -90,6 +110,7 @@ public class GameManager : MonoBehaviour
             if (isPlayerTurn)
             {
                 activeHand = playerHand;
+                badCheckButton.gameObject.SetActive(true);
             }
             else
             {
@@ -135,6 +156,12 @@ public class GameManager : MonoBehaviour
     public void SetSubmitButtonInteractable(bool value)
     {
         submitButton.interactable = value;
+        badCheckButton.gameObject.SetActive(!value);
+    }
+
+    public void ReportBadSetSubmission()
+    {
+        Debug.Log("This is a bad set!");
     }
 
     void ActivateOpponent()
@@ -157,6 +184,10 @@ public class GameManager : MonoBehaviour
     public void SetTimerOnOff()
     {
         timerOn = !timerOn;
+        if (timerOn)
+            Blackboard.cm.ToggleNameActive(isPlayerTurn);
+        else
+            Blackboard.cm.ResetNameActive();
         Blackboard.cm.ToggleTimerIcon(timerOn);
         if (timerOn) Blackboard.timer.Run();
         else Blackboard.timer.Stop();

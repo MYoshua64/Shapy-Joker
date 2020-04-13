@@ -79,6 +79,7 @@ public class CardVisual : MonoBehaviour
                 slot.SetParent(null);
                 Blackboard.sfxPlayer.PlayCardSFX(false);
             }
+            slot = null;
         }
         else if (Blackboard.gm.activeHand.GetCardAmountInHand() <= Blackboard.gm.activeHand.maximumCards)
         {
@@ -105,7 +106,8 @@ public class CardVisual : MonoBehaviour
     public void SetSubmitted()
     {
         submitted = true;
-        slot.SetParent(null);
+        if (slot)
+            slot.SetParent(Blackboard.cm.backgroundSettings.submitPanel);
     }
 
     public void SetOriginalPosition(Vector3 originalPos)
@@ -113,14 +115,15 @@ public class CardVisual : MonoBehaviour
         this.originalPos = originalPos;
     }
 
-    public void UpdatePosition()
+    public void UpdatePosition(iTween.EaseType easeType = iTween.EaseType.easeOutExpo)
     {
-        Invoke("MoveToSlot", Time.fixedDeltaTime);
+        StartCoroutine(MoveToSlot(Time.fixedDeltaTime, easeType));
     }
 
-    void MoveToSlot()
+    IEnumerator MoveToSlot(float delayTime, iTween.EaseType easeType)
     {
-        if (!slot) return;
-        if (transform.position != slot.position) iTween.MoveTo(gameObject, slot.position, 0.75f);
+        if (!slot) yield break;
+        yield return new WaitForSeconds(delayTime);
+        if (transform.position != slot.position) iTween.MoveTo(gameObject, iTween.Hash("position", slot.position, "time", 0.75f, "easetype", easeType));
     }
 }

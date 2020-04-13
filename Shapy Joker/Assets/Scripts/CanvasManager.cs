@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
 using TMPro;
+using System;
 
 public class CanvasManager : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class CanvasManager : MonoBehaviour
         public Image opponentDeckImage;
         public Sprite[] deckLightImages;
         public Sprite[] deckDarkImages;
+        public RectTransform submitPanel;
     }
 
     [System.Serializable]
@@ -35,6 +37,8 @@ public class CanvasManager : MonoBehaviour
         public Image timerImage;
         public Sprite timerLight;
         public Sprite timerDark;
+        public SpriteRenderer playerName;
+        public SpriteRenderer opponentName;
         public TextMeshProUGUI playerTimerText;
         public TextMeshProUGUI opponentTimerText;
         public Color normalTimerColor;
@@ -44,13 +48,13 @@ public class CanvasManager : MonoBehaviour
         public TimeUpImage timeUpImage;
     }
 
-    [SerializeField] BGSettings backgroundSettings;
-    [SerializeField] OptionsScreen optionsScreenSettings;
-    [SerializeField] TimerSettings timerSettings;
+    public BGSettings backgroundSettings;
+    public OptionsScreen optionsScreenSettings;
+    public TimerSettings timerSettings;
     public static List<Sprite> visibleSprites;
     TextMeshProUGUI activeTimer;
+    SpriteRenderer nameToShow;
     private bool startedFlashing = false;
-    private bool isTimerAlphaZero = false;
 
     private void Awake()
     {
@@ -102,16 +106,6 @@ public class CanvasManager : MonoBehaviour
     public void ToggleTimerIcon(bool value)
     {
         timerSettings.timerImage.sprite = value ? timerSettings.timerLight : timerSettings.timerDark;
-        if (value)
-        {
-            float counter = Mathf.Ceil(Blackboard.timer.timeCountDown);
-            string timerText = (int)counter / 60 + ":" + (counter % 60 < 10 ? "0" + (counter % 60).ToString() : (counter % 60).ToString());
-            timerSettings.playerTimerText.text = timerSettings.opponentTimerText.text = timerText;
-        }
-        else
-        {
-            timerSettings.playerTimerText.text = timerSettings.opponentTimerText.text = "";
-        }
     }
 
     public void UpdateTimerText()
@@ -136,6 +130,21 @@ public class CanvasManager : MonoBehaviour
             activeTimer.outlineColor = timerSettings.normalOutlineTimerColor;
         }
         activeTimer.text = timerText;
+    }
+
+    public void ToggleNameActive(bool isPlayerTurn)
+    {
+        timerSettings.playerName.gameObject.SetActive(!isPlayerTurn);
+        timerSettings.opponentName.gameObject.SetActive(isPlayerTurn);
+        if (isPlayerTurn) timerSettings.opponentTimerText.text = "";
+        else timerSettings.playerTimerText.text = "";
+
+    }
+
+    public void ResetNameActive()
+    {
+        timerSettings.playerName.gameObject.SetActive(true);
+        timerSettings.opponentName.gameObject.SetActive(true);
     }
 
     public void ShowTimeUpMessage()

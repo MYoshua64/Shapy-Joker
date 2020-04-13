@@ -14,7 +14,7 @@ public class TimerText : MonoBehaviour
 
     public void StartBlinking()
     {
-        iTween.ValueTo(gameObject, iTween.Hash("from", 1, "to", 100f/255, "time", 0.25f, "looptype", iTween.LoopType.pingPong,
+        iTween.ValueTo(gameObject, iTween.Hash("from", 1, "to", 50f/255, "time", 0.25f, "looptype", iTween.LoopType.pingPong,
             "onupdatetarget", gameObject, "onupdate", "ChangeAlpha"));
     }
 
