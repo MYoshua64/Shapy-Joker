@@ -172,7 +172,7 @@ public class Group
                         unique = cardsInSet[index].shape != cardsInSet[checkedIndex].shape;
                     }
                 }
-                if (unique) groupType = GroupType.ColorCons;
+                if (unique && cardsInSet.Count < 5) groupType = GroupType.ColorCons;
                 break;
             case "sN":
                 //This makes sure there are no two cards with the same color
@@ -183,7 +183,7 @@ public class Group
                         unique = cardsInSet[index].color != cardsInSet[checkedIndex].color;
                     }
                 }
-                if (unique) groupType = GroupType.ShapeCons;
+                if (unique && cardsInSet.Count < 5) groupType = GroupType.ShapeCons;
                 break;
             case "scN":
                 groupType = GroupType.ShapeColorCons;

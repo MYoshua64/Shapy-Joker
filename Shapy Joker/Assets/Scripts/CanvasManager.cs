@@ -19,6 +19,7 @@ public class CanvasManager : MonoBehaviour
         public Sprite[] deckLightImages;
         public Sprite[] deckDarkImages;
         public RectTransform submitPanel;
+        public NotificationImage badSetMessage;
     }
 
     [System.Serializable]
@@ -45,7 +46,7 @@ public class CanvasManager : MonoBehaviour
         public Color normalOutlineTimerColor;
         public Color redTintTimer;
         public Color redTintOutlineTimer;
-        public TimeUpImage timeUpImage;
+        public NotificationImage timeUpImage;
     }
 
     public BGSettings backgroundSettings;
@@ -151,5 +152,10 @@ public class CanvasManager : MonoBehaviour
     {
         activeTimer.GetComponent<TimerText>().StopBlinking();
         timerSettings.timeUpImage.Show();
+    }
+
+    public void ShowBadSetMessage()
+    {
+        backgroundSettings.badSetMessage.Show();
     }
 }

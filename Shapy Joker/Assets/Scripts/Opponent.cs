@@ -26,6 +26,7 @@ public class Opponent : MonoBehaviour
         isMySetValid = false;
         possibleGroups = new List<List<CardData>>();
         int cardIndex = -1;
+        int cap = 0;
         do
         {
             cardIndex++;
@@ -68,6 +69,8 @@ public class Opponent : MonoBehaviour
                 myHand.AddToHand(potentialCards[index]);
                 yield return new WaitForSeconds(Time.fixedDeltaTime);
             }
+            cap++;
+            if (cap > cardsOnScreen.Count) break;
         } while (!isMySetValid);
         if (!isMySetValid)
         {

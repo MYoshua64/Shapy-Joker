@@ -97,7 +97,10 @@ public class Hand : MonoBehaviour
         attachedSet = new Group(cardsInHand);
         attachedSet.CheckSetValidityBySequence();
         if (Blackboard.gm.isPlayerTurn && !submitting)
-            Blackboard.gm.SetSubmitButtonInteractable(attachedSet.isSetValid);
+        {
+            Blackboard.gm.SetSubmitButtonInteractable(cardsInHand.Count > 0);
+            Blackboard.gm.SetSubmitButtonSprite(attachedSet.isSetValid);
+        }
         else
             Blackboard.opponent.ConfirmIfSetValid(attachedSet.isSetValid);
     }
