@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -25,22 +26,30 @@ public class Opponent : MonoBehaviour
     {
         isMySetValid = false;
         possibleGroups = new List<List<CardData>>();
-        int cardIndex = -1;
-        int cap = 0;
+        int cardIndex = -1, firstIndex = 0, secondIndex = -1;
         do
         {
             cardIndex++;
             myHand.ClearHand();
-            if (cardIndex >= cardsOnScreen.Count) break;
+            if (cardIndex >= cardsOnScreen.Count)
+            {
+                myHand.ClearHand();
+                Blackboard.gm.HandleTurnEnd();
+                Debug.Log("No sets on board!");
+                SeriouslySTOPIT();
+            }
             List<CardVisual> potentialCards = new List<CardVisual>();
             CardVisual inspectedCard;
             do
             {
                 //Picks a card from all 20 cards on the table
-                inspectedCard = cardsOnScreen[cardIndex];
+                inspectedCard = cardsOnScreen[firstIndex];
                 //Tries to find cards that have at least TWO shared attributes
                 potentialCards = FindMatchesIn(inspectedCard.attachedCard, cardsOnScreen);
-            } while (potentialCards.Count < 2);
+                firstIndex++;
+            } while (potentialCards.Count < 2 && firstIndex < cardsOnScreen.Count);
+            inspectedCard.Print();
+            if (potentialCards.Count < 2) continue;
             myHand.AddToHand(inspectedCard);
             while (GameManager.gamePaused)
             {
@@ -48,39 +57,34 @@ public class Opponent : MonoBehaviour
             }
             List<CardVisual> matches = new List<CardVisual>();
             matches.AddRange(potentialCards);
-            int index = -1;
             do
             {
-                index++;
+                secondIndex++;
                 //Goes through the generated list of matching cards
-                inspectedCard = matches[index];
+                inspectedCard = matches[secondIndex];
                 //Tries to find more matching cards to create a set
                 potentialCards = FindMatchesIn(inspectedCard.attachedCard, matches);
-            } while (potentialCards.Count < 1 && index < potentialCards.Count);
+            } while (potentialCards.Count < 1 && secondIndex < potentialCards.Count);
+            if (potentialCards.Count < 1) continue;
             myHand.AddToHand(inspectedCard);
             while (GameManager.gamePaused)
             {
                 yield return null;
             }
-            for (index = 0; index < potentialCards.Count && !isMySetValid; index++)
+            for (int iter = 0; iter < potentialCards.Count && !isMySetValid; iter++)
             {
                 //This goes through "trial and error" until it finds a set
-                myHand.RemoveFromHandAt(2);
-                myHand.AddToHand(potentialCards[index]);
+                if (iter >= 1)
+                {
+                    myHand.RemoveFromHand(potentialCards[iter - 1], default, true);
+                }
+                myHand.AddToHand(potentialCards[iter]);
                 yield return new WaitForSeconds(Time.fixedDeltaTime);
             }
-            cap++;
-            if (cap > cardsOnScreen.Count) break;
         } while (!isMySetValid);
-        if (!isMySetValid)
-        {
-            myHand.ClearHand();
-            Blackboard.gm.HandleTurnEnd();
-            yield break;
-        }
         string neededCard = CalculateNeededCard();
         SearchForCardWithID(neededCard);
-        if (myHand.cardsInHand.Count > 3)
+        if (myHand.cardsInHand.Count > 3 && myHand.GetHandGroupType() == GroupType.ShapeColorCons)
         {
             neededCard = CalculateNeededCard();
             SearchForCardWithID(neededCard);
@@ -98,6 +102,11 @@ public class Opponent : MonoBehaviour
         Blackboard.gm.SubmitSet();
     }
 
+    private void SeriouslySTOPIT()
+    {
+        StopAllCoroutines();
+    }
+
     private void SearchForCardWithID(string neededCard)
     {
         string neededJoker = neededCard[0] + "J";
@@ -105,7 +114,13 @@ public class Opponent : MonoBehaviour
         {
             if (cardsOnScreen[i].attachedCard.id == neededCard || (!myHand.ContainsJoker() && cardsOnScreen[i].attachedCard.id == neededJoker))
             {
+                if (cardsOnScreen[i].attachedCard.jokerCard)
+                {
+                    CardData virtualCard = new CardData(neededCard);
+                    cardsOnScreen[i].AttachCardData(virtualCard, true);
+                }
                 myHand.AddToHand(cardsOnScreen[i]);
+                if (!isMySetValid) myHand.RemoveFromHand(cardsOnScreen[i]);
                 return;
             }
         }

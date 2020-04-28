@@ -51,12 +51,16 @@ public class GameManager : MonoBehaviour
     public void SubmitSet()
     {
         if (gamePaused) return;
-        if (isPlayerTurn && submitButton.GetComponent<Image>().sprite == buttonWrong)
+        if (isPlayerTurn && !playerHand.isCombinationValid())
+        {
+            CancelInvoke("ResetSubmitButtonSprite");
+            submitButton.GetComponent<Image>().sprite = buttonWrong;
+            Invoke("ResetSubmitButtonSprite", 2f);
             ReportBadSetSubmission();
+        }
         else
         {
             Blackboard.sfxPlayer.PlaySubmitSFX();
-            submitButton.GetComponent<Image>().sprite = buttonWrong;
             submitButton.interactable = false;
             if (timerOn) Blackboard.timer.Stop();
             foreach (CardData card in activeHand.cardsInHand)
@@ -84,7 +88,7 @@ public class GameManager : MonoBehaviour
             Blackboard.tableCardsParent.RemoveFromFormation(_Card);
         }
         yield return new WaitForSeconds(0.1f);
-        for (int j = 0; j < repCards.Count; j++)
+        for (int j = 0; j < Blackboard.cm.backgroundSettings.submitPanel.childCount; j++)
         {
             CardVisual _Card = repCards[j].cardView;
             Transform selectedSlot = Blackboard.cm.backgroundSettings.submitPanel.GetChild(repCards.Count - 1 - j);
@@ -166,9 +170,9 @@ public class GameManager : MonoBehaviour
         isGameOver = playerScore <= 0 || opponentScore <= 0;
     }
 
-    public void SetSubmitButtonSprite(bool value)
+    public void ResetSubmitButtonSprite()
     {
-        submitButton.GetComponent<Image>().sprite = value ? buttonCorrect : buttonWrong;
+        submitButton.GetComponent<Image>().sprite = buttonCorrect;
     }
 
     public void SetSubmitButtonInteractable(bool value)

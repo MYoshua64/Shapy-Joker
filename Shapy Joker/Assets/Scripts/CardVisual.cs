@@ -35,6 +35,7 @@ public class CardVisual : MonoBehaviour
     private void OnMouseDown()
     {
         if (!Blackboard.gm.isPlayerTurn || GameManager.gamePaused || Blackboard.gm.isGameOver) return;
+        Blackboard.gm.ResetSubmitButtonSprite();
         if (selected)
         {
             Blackboard.gm.activeHand.RemoveFromHand(this);
@@ -55,15 +56,18 @@ public class CardVisual : MonoBehaviour
     /// This function takes card data and attaches it to the view
     /// </summary>
     /// <param name="cardData">The card data to attach to the view</param>
-    public void AttachCardData(CardData cardData)
+    public void AttachCardData(CardData cardData, bool fromJoker = false)
     {
         attachedCard = cardData;
         attachedCard.SetCardView(this);
         attachedCardID = attachedCard.id;
-        name = attachedCard.id;
-        int spriteIndex = attachedCard.index < 80 ? attachedCard.index : 80 + (attachedCard.index % 80) / 2;
-        GetComponent<SpriteRenderer>().sprite = CanvasManager.visibleSprites[spriteIndex];
-        Init();
+        if (!fromJoker)
+        {
+            name = attachedCard.id;
+            int spriteIndex = attachedCard.index < 80 ? attachedCard.index : 80 + (attachedCard.index % 80) / 2;
+            GetComponent<SpriteRenderer>().sprite = CanvasManager.visibleSprites[spriteIndex];
+            Init();
+        }
     }
 
     public void HandleSelected()
@@ -125,5 +129,10 @@ public class CardVisual : MonoBehaviour
         if (!slot) yield break;
         yield return new WaitForSeconds(delayTime);
         if (transform.position != slot.position) iTween.MoveTo(gameObject, iTween.Hash("position", slot.position, "time", 0.75f, "easetype", easeType));
+    }
+
+    public void Print()
+    {
+        Debug.Log(attachedCard.id);
     }
 }

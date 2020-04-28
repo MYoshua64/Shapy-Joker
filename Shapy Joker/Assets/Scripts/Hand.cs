@@ -72,11 +72,12 @@ public class Hand : MonoBehaviour
         cardsInHand.Clear();
     }
 
-    public void RemoveFromHand(CardVisual cardToRemove, bool submitting = false)
+    public void RemoveFromHand(CardVisual cardToRemove, bool submitting = false, bool byOpponent = false)
     {
         if (!cardsInHand.Contains(cardToRemove.attachedCard)) return;
         cardsInHand.Remove(cardToRemove.attachedCard);
-        cardToRemove.HandleSelected();
+        if (!byOpponent)
+            cardToRemove.HandleSelected();
         if (!submitting)
         {
             foreach (CardData card in cardsInHand)
@@ -99,7 +100,6 @@ public class Hand : MonoBehaviour
         if (Blackboard.gm.isPlayerTurn && !submitting)
         {
             Blackboard.gm.SetSubmitButtonInteractable(cardsInHand.Count > 0);
-            Blackboard.gm.SetSubmitButtonSprite(attachedSet.isSetValid);
         }
         else
             Blackboard.opponent.ConfirmIfSetValid(attachedSet.isSetValid);
@@ -117,5 +117,10 @@ public class Hand : MonoBehaviour
             if (card.jokerCard) return true;
         }
         return false;
+    }
+
+    public bool isCombinationValid()
+    {
+        return attachedSet.isSetValid;
     }
 }
