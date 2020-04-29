@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 207352388207439678}
   - component: {fileID: 1484879350}
   - component: {fileID: 8676162072213844270}
-  - component: {fileID: 541111578}
+  - component: {fileID: 6813173388523362568}
   m_Layer: 0
   m_Name: Card
   m_TagString: Untagged
@@ -82,7 +82,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6813173388654636487}
   m_CullTransparentMesh: 0
---- !u!212 &541111578
+--- !u!212 &6813173388523362568
 SpriteRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

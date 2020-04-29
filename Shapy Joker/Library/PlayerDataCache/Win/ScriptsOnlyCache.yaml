@@ -326,7 +326,7 @@ ScriptsOnlyBuild:
     className: SignalAsset
   - hash:
       serializedVersion: 2
-      Hash: b2b3ffada62caf11a50b239b5532e56f
+      Hash: 9d3040a6ac77513eae12dab32bec8b41
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: GameManager

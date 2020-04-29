@@ -10,9 +10,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] RectTransform playerLoseScreen;
     [SerializeField] DeckBuilder deck;
     [SerializeField] Hand playerHand;
-    [SerializeField] Button submitButton;
+    [SerializeField] Button submitButtonDefault;
+    [SerializeField] Button submitButtonCorrect;
     [SerializeField] TextMeshProUGUI playerDeckText;
     [SerializeField] TextMeshProUGUI opponentDeckText;
+    [SerializeField] Sprite buttonDefault;
     [SerializeField] Sprite buttonCorrect;
     [SerializeField] Sprite buttonWrong;
     public Hand opponentHand;
@@ -23,6 +25,7 @@ public class GameManager : MonoBehaviour
     public int opponentScore { get; private set; } = 34;
     public static bool gamePaused;
     public bool timerOn { get; private set; } = false;
+    bool playerSubmitted = false;
 
     //This will contain the positions of the cards before they are submitted
     public List<Vector3> lastPositions { get; private set; } = new List<Vector3>();
@@ -48,30 +51,31 @@ public class GameManager : MonoBehaviour
         Blackboard.cm.SetAudioImage(volumeSlider.value);
     }
 
+    public void SubmitSetWrong()
+    {
+        if (gamePaused || playerSubmitted) return;
+        CancelInvoke("ResetSubmitButtonSprite");
+        submitButtonDefault.GetComponent<Image>().sprite = buttonWrong;
+        Invoke("ResetSubmitButtonSprite", 2f);
+        ReportBadSetSubmission();
+    }
+
     public void SubmitSet()
     {
         if (gamePaused) return;
-        if (isPlayerTurn && !playerHand.isCombinationValid())
+        if (isPlayerTurn)
+            playerSubmitted = true;
+        Blackboard.sfxPlayer.PlaySubmitSFX();
+        SetSubmitButtonTrue(false);
+        if (timerOn) Blackboard.timer.Stop();
+        foreach (CardData card in activeHand.cardsInHand)
         {
-            CancelInvoke("ResetSubmitButtonSprite");
-            submitButton.GetComponent<Image>().sprite = buttonWrong;
-            Invoke("ResetSubmitButtonSprite", 2f);
-            ReportBadSetSubmission();
+            CardVisual _Card = card.cardView;
+            if (!_Card) continue;
+            _Card.SetSubmitted();
         }
-        else
-        {
-            Blackboard.sfxPlayer.PlaySubmitSFX();
-            submitButton.interactable = false;
-            if (timerOn) Blackboard.timer.Stop();
-            foreach (CardData card in activeHand.cardsInHand)
-            {
-                CardVisual _Card = card.cardView;
-                if (!_Card) continue;
-                _Card.SetSubmitted();
-            }
-            CardVisual.currentHighSortingOrder = 10;
-            StartCoroutine(MoveCardsOutOfScreen());
-        }
+        CardVisual.currentHighSortingOrder = 10;
+        StartCoroutine(MoveCardsOutOfScreen());
     }
 
     IEnumerator MoveCardsOutOfScreen()
@@ -119,7 +123,7 @@ public class GameManager : MonoBehaviour
         if (timerOn) Blackboard.cm.ToggleNameActive(isPlayerTurn);
         if (timeUp)
         {
-            submitButton.interactable = false;
+            submitButtonDefault.interactable = false;
             Blackboard.cm.ShowTimeUpMessage();
             ReturnCards();
         }
@@ -127,6 +131,7 @@ public class GameManager : MonoBehaviour
         {
             if (isPlayerTurn)
             {
+                playerSubmitted = false;
                 activeHand = playerHand;
             }
             else
@@ -172,12 +177,13 @@ public class GameManager : MonoBehaviour
 
     public void ResetSubmitButtonSprite()
     {
-        submitButton.GetComponent<Image>().sprite = buttonCorrect;
+        submitButtonDefault.GetComponent<Image>().sprite = buttonDefault;
     }
 
-    public void SetSubmitButtonInteractable(bool value)
+    public void SetSubmitButtonTrue(bool value)
     {
-        submitButton.interactable = value;
+        submitButtonDefault.gameObject.SetActive(!value);
+        submitButtonCorrect.gameObject.SetActive(value);
     }
 
     public void ReportBadSetSubmission()

@@ -99,7 +99,7 @@ public class Hand : MonoBehaviour
         attachedSet.CheckSetValidityBySequence();
         if (Blackboard.gm.isPlayerTurn && !submitting)
         {
-            Blackboard.gm.SetSubmitButtonInteractable(cardsInHand.Count > 0);
+            Blackboard.gm.SetSubmitButtonTrue(attachedSet.isSetValid);
         }
         else
             Blackboard.opponent.ConfirmIfSetValid(attachedSet.isSetValid);
@@ -121,6 +121,8 @@ public class Hand : MonoBehaviour
 
     public bool isCombinationValid()
     {
-        return attachedSet.isSetValid;
+        if (attachedSet != null)
+            return attachedSet.isSetValid;
+        return false;
     }
 }
