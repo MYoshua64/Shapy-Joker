@@ -18,8 +18,16 @@ public class CanvasManager : MonoBehaviour
         public Image opponentDeckImage;
         public Sprite[] deckLightImages;
         public Sprite[] deckDarkImages;
+        public TextMeshProUGUI playerDeckCount;
+        public TextMeshProUGUI opponentDeckCount;
+        public Color deckCountLight;
+        public Color deckCountDark;
         public RectTransform submitPanel;
-        public NotificationImage badSetMessage;
+        
+        public NotificationImage player1BadSetMessage;
+        public NotificationImage player2BadSetMessage;
+
+        public Image screenFaderImage;
     }
 
     [System.Serializable]
@@ -53,6 +61,7 @@ public class CanvasManager : MonoBehaviour
     public OptionsScreen optionsScreenSettings;
     public TimerSettings timerSettings;
     public static List<Sprite> visibleSprites;
+    NotificationImage badSetMessage;
     TextMeshProUGUI activeTimer;
     SpriteRenderer nameToShow;
     private bool startedFlashing = false;
@@ -73,6 +82,8 @@ public class CanvasManager : MonoBehaviour
         backgroundSettings.backgroundImage.sprite = isPlayerTurn ? backgroundSettings.playerTurnBG : backgroundSettings.opponentTurnBG;
         if (isPlayerTurn)
         {
+            backgroundSettings.playerDeckCount.color = backgroundSettings.deckCountLight;
+            backgroundSettings.opponentDeckCount.color = backgroundSettings.deckCountDark;
             if (Blackboard.gm.playerScore / 10 > 1)
             {
                 backgroundSettings.playerDeckImage.sprite = backgroundSettings.deckLightImages[Blackboard.gm.playerScore / 10 - 1];
@@ -84,6 +95,8 @@ public class CanvasManager : MonoBehaviour
         }
         else
         {
+            backgroundSettings.playerDeckCount.color = backgroundSettings.deckCountDark;
+            backgroundSettings.opponentDeckCount.color = backgroundSettings.deckCountLight;
             if (Blackboard.gm.playerScore / 10 > 1)
             {
                 backgroundSettings.playerDeckImage.sprite = backgroundSettings.deckDarkImages[Blackboard.gm.playerScore / 10 - 1];
@@ -113,7 +126,7 @@ public class CanvasManager : MonoBehaviour
     {
         float counter = Mathf.Ceil(Blackboard.timer.timeCountDown);
         string timerText = (int)counter / 60 + ":" + (counter % 60 < 10 ? "0" + (counter % 60).ToString() : (counter % 60).ToString());
-        activeTimer = Blackboard.gm.isPlayerTurn ? timerSettings.playerTimerText : timerSettings.opponentTimerText;
+        activeTimer = Blackboard.gm.isMainPlayerTurn ? timerSettings.playerTimerText : timerSettings.opponentTimerText;
         if (counter <= 5)
         {
             if (!startedFlashing)
@@ -145,7 +158,9 @@ public class CanvasManager : MonoBehaviour
     public void ResetNameActive()
     {
         timerSettings.playerName.gameObject.SetActive(true);
+        timerSettings.playerTimerText.text = "";
         timerSettings.opponentName.gameObject.SetActive(true);
+        timerSettings.opponentTimerText.text = "";
     }
 
     public void ShowTimeUpMessage()
@@ -156,6 +171,7 @@ public class CanvasManager : MonoBehaviour
 
     public void ShowBadSetMessage()
     {
-        backgroundSettings.badSetMessage.Show();
+        badSetMessage = Blackboard.gm.isMainPlayerTurn ? backgroundSettings.player1BadSetMessage : backgroundSettings.player2BadSetMessage;
+        badSetMessage.Show();
     }
 }

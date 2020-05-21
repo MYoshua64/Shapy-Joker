@@ -1,12 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Hand : MonoBehaviour
 {
     public List<CardSlot> cardSlots = new List<CardSlot>();
     public List<CardData> cardsInHand { get; private set; } = new List<CardData>();
     public int maximumCards { get; private set; } = 5;
+    public bool submitted = false;
+    public Button submitButton;
+    public Button submitButtonWrong;
     Group attachedSet;
 
     public RectTransform FindNextOpenSlot()
@@ -28,7 +32,7 @@ public class Hand : MonoBehaviour
             cardsInHand.Add(newCard.attachedCard);
             CheckAttachedSetValidity();
         }
-        if (!Blackboard.gm.isPlayerTurn)
+        if (!Blackboard.gm.hotseatMode && !Blackboard.gm.isMainPlayerTurn)
         {
             if (cardsInHand.Count > 2)
             {
@@ -43,20 +47,23 @@ public class Hand : MonoBehaviour
             newCard.HandleSelected();
     }
 
-    public void RemoveFromHandAt(int index)
+    public void RemoveFromHandAt(int index, bool byOpponent = false)
     {
         //if the index is in the set's bound...
         if (index < cardsInHand.Count)
         {
             //Remove the card in given index and returns it to its place
-            if (cardsInHand[index].cardView.selected && Blackboard.gm.isPlayerTurn)
+            if (cardsInHand[index].cardView.selected && Blackboard.gm.isMainPlayerTurn)
                 cardsInHand[index].cardView.HandleSelected();
             cardsInHand.RemoveAt(index);
             //And checkes the validity of the set without it
-            CheckAttachedSetValidity();
-            foreach (CardData card in cardsInHand)
+            if (!byOpponent)
             {
-                card.cardView.UpdatePosition();
+                CheckAttachedSetValidity();
+                foreach (CardData card in cardsInHand)
+                {
+                    card.cardView.UpdatePosition();
+                }
             }
         }
     }
@@ -97,9 +104,9 @@ public class Hand : MonoBehaviour
     {
         attachedSet = new Group(cardsInHand);
         attachedSet.CheckSetValidityBySequence();
-        if (Blackboard.gm.isPlayerTurn && !submitting)
+        if (Blackboard.gm.hotseatMode || (Blackboard.gm.isMainPlayerTurn && !submitting))
         {
-            Blackboard.gm.SetSubmitButtonTrue(attachedSet.isSetValid);
+            Blackboard.gm.SetSubmitButtonsTrue(submitButton, submitButtonWrong, attachedSet.isSetValid);
         }
         else
             Blackboard.opponent.ConfirmIfSetValid(attachedSet.isSetValid);

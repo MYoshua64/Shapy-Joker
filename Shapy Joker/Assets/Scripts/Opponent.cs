@@ -7,7 +7,6 @@ public class Opponent : MonoBehaviour
 {
     Hand myHand;
     List<CardVisual> cardsOnScreen = new List<CardVisual>();
-    List<List<CardData>> possibleGroups;
     public bool isMySetValid { get; private set; } = false;
 
     private void Awake()
@@ -25,70 +24,50 @@ public class Opponent : MonoBehaviour
     IEnumerator SearchForSets()
     {
         isMySetValid = false;
-        possibleGroups = new List<List<CardData>>();
-        int cardIndex = -1, firstIndex = 0, secondIndex = -1;
+        int cardIndex = 0, firstIndex = 0;
         do
         {
-            cardIndex++;
             myHand.ClearHand();
+            List<CardVisual> potentialCards = new List<CardVisual>();
             if (cardIndex >= cardsOnScreen.Count)
             {
-                myHand.ClearHand();
+                Debug.LogError("No sets found! I might be blind though, because my programmer is too dumb to make me right!");
                 Blackboard.gm.HandleTurnEnd();
-                Debug.Log("No sets on board!");
-                SeriouslySTOPIT();
+                yield break;
             }
-            List<CardVisual> potentialCards = new List<CardVisual>();
-            CardVisual inspectedCard;
-            do
+            CardVisual inspectedCard = cardsOnScreen[cardIndex];
+            if (inspectedCard.attachedCard.jokerCard)
             {
-                //Picks a card from all 20 cards on the table
-                inspectedCard = cardsOnScreen[firstIndex];
-                //Tries to find cards that have at least TWO shared attributes
-                potentialCards = FindMatchesIn(inspectedCard.attachedCard, cardsOnScreen);
-                firstIndex++;
-            } while (potentialCards.Count < 2 && firstIndex < cardsOnScreen.Count);
+                cardIndex++;
+                continue;
+            }
             inspectedCard.Print();
-            if (potentialCards.Count < 2) continue;
+            cardIndex++;
+            potentialCards = FindMatchesIn(inspectedCard.attachedCard, cardsOnScreen);
             myHand.AddToHand(inspectedCard);
-            while (GameManager.gamePaused)
-            {
-                yield return null;
-            }
-            List<CardVisual> matches = new List<CardVisual>();
-            matches.AddRange(potentialCards);
+            firstIndex = 0;
             do
             {
-                secondIndex++;
-                //Goes through the generated list of matching cards
-                inspectedCard = matches[secondIndex];
-                //Tries to find more matching cards to create a set
-                potentialCards = FindMatchesIn(inspectedCard.attachedCard, matches);
-            } while (potentialCards.Count < 1 && secondIndex < potentialCards.Count);
-            if (potentialCards.Count < 1) continue;
-            myHand.AddToHand(inspectedCard);
-            while (GameManager.gamePaused)
-            {
-                yield return null;
-            }
-            for (int iter = 0; iter < potentialCards.Count && !isMySetValid; iter++)
-            {
-                //This goes through "trial and error" until it finds a set
-                if (iter >= 1)
+                if (firstIndex >= potentialCards.Count) break;
+                if (myHand.cardsInHand.Count > 1)
                 {
-                    myHand.RemoveFromHand(potentialCards[iter - 1], default, true);
+                    myHand.RemoveFromHand(inspectedCard, default, true);
                 }
-                myHand.AddToHand(potentialCards[iter]);
-                yield return new WaitForSeconds(Time.fixedDeltaTime);
-            }
+                inspectedCard = potentialCards[firstIndex];
+                if (inspectedCard.attachedCard.jokerCard)
+                {
+                    firstIndex++;
+                    continue;
+                }
+                inspectedCard.Print();
+                myHand.AddToHand(inspectedCard);
+                string neededCard = CalculateNeededCard();
+                SearchForCardWithID(neededCard);
+                firstIndex++;
+            } while (!isMySetValid);
         } while (!isMySetValid);
-        string neededCard = CalculateNeededCard();
-        SearchForCardWithID(neededCard);
-        if (myHand.cardsInHand.Count > 3 && myHand.GetHandGroupType() == GroupType.ShapeColorCons)
-        {
-            neededCard = CalculateNeededCard();
-            SearchForCardWithID(neededCard);
-        }
+        string extraCard = CalculateNeededCard(myHand.GetHandGroupType());
+        SearchForCardWithID(extraCard);
         foreach (CardData card in myHand.cardsInHand)
         {
             myHand.AddToHand(card.cardView, true);
@@ -99,12 +78,8 @@ public class Opponent : MonoBehaviour
         {
             yield return null;
         }
-        Blackboard.gm.SubmitSet();
-    }
-
-    private void SeriouslySTOPIT()
-    {
-        StopAllCoroutines();
+        Debug.LogWarning("Submitted");
+        Blackboard.gm.SubmitSet(myHand);
     }
 
     private void SearchForCardWithID(string neededCard)
@@ -120,7 +95,7 @@ public class Opponent : MonoBehaviour
                     cardsOnScreen[i].AttachCardData(virtualCard, true);
                 }
                 myHand.AddToHand(cardsOnScreen[i]);
-                if (!isMySetValid) myHand.RemoveFromHand(cardsOnScreen[i]);
+                if (!isMySetValid) myHand.RemoveFromHand(cardsOnScreen[i], default, true);
                 return;
             }
         }
@@ -135,133 +110,10 @@ public class Opponent : MonoBehaviour
             int matches = 0;
             //Whenever there is a match in an attribute, the counter goes up by 1
             matches += Compare(comparedCard.attachedCard.color, inspectedCard.color) + 
-                Compare(comparedCard.attachedCard.shape, inspectedCard.shape) +
-                Compare(comparedCard.attachedCard.number, inspectedCard.number);
-            if (matches >= 2 || IsThereJoker(comparedCard.attachedCard, inspectedCard)) potentialCards.Add(comparedCard);
+                Compare(comparedCard.attachedCard.shape, inspectedCard.shape);
+            if ((matches >= 1 && Compare(comparedCard.attachedCard.number, inspectedCard.number) == 1) || IsThereJoker(comparedCard.attachedCard, inspectedCard)) potentialCards.Add(comparedCard);
         }
         return potentialCards;
-    }
-
-    string CalculateNeededCard()
-    {
-        GroupType myHandGroupType = myHand.GetHandGroupType();
-        string neededCardString = "";
-        switch (myHandGroupType)
-        {
-            case GroupType.NumberColor:
-                neededCardString += ChooseNeededCardColor(false) + ChooseNeededCardShape() + ChooseNeededCardNumber(false);
-                break;
-            case GroupType.ShapeNumber:
-                neededCardString += ChooseNeededCardColor() + ChooseNeededCardShape(false) + ChooseNeededCardNumber(false);
-                break;
-            case GroupType.ShapeColorCons:
-                neededCardString += ChooseNeededCardColor(false) + ChooseNeededCardShape(false) + ChooseNeededCardNumber();
-                break;
-            case GroupType.ColorCons:
-                neededCardString += ChooseNeededCardColor(false) + ChooseNeededCardShape() + ChooseNeededCardNumber();
-                break;
-            case GroupType.ShapeCons:
-                neededCardString += ChooseNeededCardColor() + ChooseNeededCardShape(false) + ChooseNeededCardNumber();
-                break;
-        }
-        return neededCardString;
-    }
-
-    private string ChooseNeededCardNumber(bool different = true)
-    {
-        if (!different)
-        {
-            if (!myHand.cardsInHand[myHand.cardsInHand.Count - 1].jokerCard)
-                return myHand.cardsInHand[myHand.cardsInHand.Count - 1].id[2].ToString();
-            else
-                return myHand.cardsInHand[myHand.cardsInHand.Count - 2].id[2].ToString();
-        }
-        if (!myHand.cardsInHand[myHand.cardsInHand.Count - 1].jokerCard)
-        {
-            if (myHand.cardsInHand[myHand.cardsInHand.Count - 1].number < 5)
-                return (myHand.cardsInHand[myHand.cardsInHand.Count - 1].number + 1).ToString();
-            else if (myHand.cardsInHand[0].number > 1)
-                return (myHand.cardsInHand[0].number - 1).ToString();
-        }
-        else
-        {
-            if (myHand.cardsInHand[myHand.cardsInHand.Count - 2].number < 4)
-                return (myHand.cardsInHand[myHand.cardsInHand.Count - 2].number + 2).ToString();
-            else if (myHand.cardsInHand[0].number > 1)
-                return (myHand.cardsInHand[0].number - 1).ToString();
-        }
-        return "";
-    }
-
-    private string ChooseNeededCardShape(bool different = true)
-    {
-        if (!different)
-        {
-            if (!myHand.cardsInHand[myHand.cardsInHand.Count - 1].jokerCard)
-                return myHand.cardsInHand[myHand.cardsInHand.Count - 1].id[1].ToString();
-            else
-                return myHand.cardsInHand[myHand.cardsInHand.Count - 2].id[1].ToString();
-        }
-        CardShape selectedShape = CardShape.Joker;
-        bool match = true;
-        for (int i = 0; i < 4 && match; i++)
-        {
-            match = true;
-            selectedShape = (CardShape)i;
-            foreach (CardData card in myHand.cardsInHand)
-            {
-                match = card.shape == selectedShape;
-                if (match) break;
-            }
-        }
-        switch (selectedShape)
-        {
-            case CardShape.Star:
-                return "S";
-            case CardShape.Rectangle:
-                return "R";
-            case CardShape.Triangle:
-                return "T";
-            case CardShape.Circle:
-                return "C";
-            case CardShape.Joker:
-                return "J";
-            default:
-                return "";
-        }
-    }
-
-    private string ChooseNeededCardColor(bool different = true)
-    {
-        if (!different)
-        {
-            return myHand.cardsInHand[myHand.cardsInHand.Count - 1].id[0].ToString();
-        }
-        CardColor selectedColor = CardColor.Blue;
-        bool match = true;
-        for (int i = 0; i < 4 && match; i++)
-        {
-            match = true;
-            selectedColor = (CardColor)i;
-            foreach (CardData card in myHand.cardsInHand)
-            {
-                match = card.color == selectedColor;
-                if (match) break;
-            }
-        }
-        switch (selectedColor)
-        {
-            case CardColor.Yellow:
-                return "Y";
-            case CardColor.Blue:
-                return "B";
-            case CardColor.Red:
-                return "R";
-            case CardColor.Green:
-                return "G";
-            default:
-                return "";
-        }
     }
 
     int Compare(object a, object b)
@@ -276,11 +128,205 @@ public class Opponent : MonoBehaviour
 
     int Compare(int a, int b)
     {
-        return Mathf.Abs(a - b) <= 2 ? 1 : 0;
+        return Mathf.Abs(a - b) <= 1 ? 1 : 0;
     }
 
     public void ConfirmIfSetValid(bool value)
     {
         isMySetValid = value;
+    }
+
+    string CalculateNeededCard(GroupType groupType = GroupType.None)
+    {
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        switch (groupType)
+        {
+            case GroupType.None:
+                sb.Append(CalculateNeededColor(myHand.cardsInHand[0].color != myHand.cardsInHand[1].color));
+                sb.Append(CalculateNeededShape(myHand.cardsInHand[0].shape != myHand.cardsInHand[1].shape));
+                sb.Append(CalculateNeededNumber(myHand.cardsInHand[0].number != myHand.cardsInHand[1].number));
+                break;
+            case GroupType.NumberColor:
+                sb.Append(CalculateNeededColor());
+                sb.Append(CalculateNeededShape(true));
+                sb.Append(CalculateNeededNumber());
+                break;
+            case GroupType.ShapeNumber:
+                sb.Append(CalculateNeededColor(true));
+                sb.Append(CalculateNeededShape());
+                sb.Append(CalculateNeededNumber());
+                break;
+            case GroupType.ShapeColorCons:
+                sb.Append(CalculateNeededColor());
+                sb.Append(CalculateNeededShape());
+                sb.Append(CalculateNeededNumber(true));
+                break;
+            case GroupType.ColorCons:
+                sb.Append(CalculateNeededColor());
+                sb.Append(CalculateNeededShape(true));
+                sb.Append(CalculateNeededNumber(true));
+                break;
+            case GroupType.ShapeCons:
+                sb.Append(CalculateNeededColor(true));
+                sb.Append(CalculateNeededShape());
+                sb.Append(CalculateNeededNumber(true));
+                break;
+        }
+        return sb.ToString();
+    }
+
+    string CalculateNeededShape(bool different = false)
+    {
+        string shapeStr = "";
+        if (!different)
+        {
+            shapeStr = ConvertToString(myHand.cardsInHand[0].shape);
+        }
+        else
+        {
+            int index = 0;
+            bool match = true;
+            bool uniqueShapeFound = true;
+            CardShape _shape = CardShape.Circle;
+            for (; index < 4 && !uniqueShapeFound; index++)
+            {
+                uniqueShapeFound = true;
+                _shape = (CardShape)index;
+                for (int i = 0; i < myHand.cardsInHand.Count; i++)
+                {
+                    match = myHand.cardsInHand[i].shape == _shape;
+                    uniqueShapeFound = uniqueShapeFound && !match;
+                }
+            }
+            shapeStr = ConvertToString(_shape);
+        }
+        return shapeStr;
+    }
+
+    string CalculateNeededColor(bool different = false)
+    {
+        string colorStr = "";
+        if (!different)
+        {
+            colorStr = ConvertToString(myHand.cardsInHand[0].color);
+        }
+        else
+        {
+            int index = 0;
+            bool match = true;
+            bool uniqueColorFound = true;
+            CardColor _color = CardColor.Blue;
+            for (; index < 4 && match; index++)
+            {
+                uniqueColorFound = true;
+                _color = (CardColor)index;
+                for (int i = 0; i < myHand.cardsInHand.Count && match; i++)
+                {
+                    match = myHand.cardsInHand[i].color == _color;
+                    uniqueColorFound = uniqueColorFound && !match;
+                }
+            }
+            colorStr = ConvertToString(_color);
+        }
+        return colorStr;
+    }
+
+    string CalculateNeededNumber(bool different = false)
+    {
+        string numStr = "";
+        if (!different)
+        {
+            numStr = myHand.cardsInHand[0].number.ToString();
+        }
+        else
+        {
+            int cardIndex = 0;
+            if (FindSmallestNumber(out cardIndex) > 1)
+            {
+                numStr = (myHand.cardsInHand[cardIndex].number - 1).ToString();
+            }
+            else if (FindGreatestNumber(out cardIndex) < 5)
+            {
+                numStr = (myHand.cardsInHand[cardIndex].number + 1).ToString();
+            }
+        }
+        return numStr;
+    }
+
+    string ConvertToString(CardShape shape)
+    {
+        string str = "";
+        switch (shape)
+        {
+            case CardShape.Joker:
+                str = "J";
+                break;
+            case CardShape.Star:
+                str = "S";
+                break;
+            case CardShape.Rectangle:
+                str = "R";
+                break;
+            case CardShape.Triangle:
+                str = "T";
+                break;
+            case CardShape.Circle:
+                str = "C";
+                break;
+        }
+        return str;
+    }
+
+    string ConvertToString(CardColor color)
+    {
+        string str = "";
+        switch (color)
+        {
+            case CardColor.Yellow:
+                str = "Y";
+                break;
+            case CardColor.Blue:
+                str = "B";
+                break;
+            case CardColor.Red:
+                str = "R";
+                break;
+            case CardColor.Green:
+                str = "G";
+                break;
+        }
+        return str;
+    }
+
+    int FindSmallestNumber(out int index)
+    {
+        int number = 6;
+        index = 0;
+        for (int i = 0; i < myHand.cardsInHand.Count; i++)
+        {
+            CardData comparedCard = myHand.cardsInHand[i];
+            if (comparedCard.number < number)
+            {
+                number = comparedCard.number;
+                index = i;
+            }
+        }
+        return number;
+    }
+
+    int FindGreatestNumber(out int index)
+    {
+        int number = 0;
+        index = 0;
+        for (int i = 0; i < myHand.cardsInHand.Count; i++)
+        {
+            CardData comparedCard = myHand.cardsInHand[i];
+            if (comparedCard.number > number)
+            {
+                number = comparedCard.number;
+                index = i;
+            }
+        }
+        return number;
     }
 }

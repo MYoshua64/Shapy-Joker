@@ -5,7 +5,7 @@ using UnityEngine;
 public class Timer : MonoBehaviour
 {
     [Tooltip("Turn time in minutes")]
-    [SerializeField] float turnTime;
+    float turnTime;
     public float timeCountDown { get; private set; }
     bool running = false;
 
@@ -14,9 +14,14 @@ public class Timer : MonoBehaviour
         Blackboard.timer = this;
     }
 
+    public void SetTurnTime(float time)
+    {
+        turnTime = time;
+    }
+
     public void Run()
     {
-        timeCountDown = turnTime * 60;
+        timeCountDown = turnTime;
         running = true;
     }
 

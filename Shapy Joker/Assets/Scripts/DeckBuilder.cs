@@ -28,7 +28,7 @@ public class DeckBuilder : MonoBehaviour
                 int number = index % 5 + 1;
                 int shape = index / 5 % 4;
                 int color = index / 20 % 4;
-                DetermineStringID(color,shape,number);
+                DetermineStringID(color, shape, number);
             }
             else
             {
@@ -143,7 +143,7 @@ public class DeckBuilder : MonoBehaviour
 
     IEnumerator StartDealing(int numberToDeal)
     {
-        RectTransform activeDeck = Blackboard.gm.isPlayerTurn ? playerDeck : opponentDeck;
+        RectTransform activeDeck = Blackboard.gm.isMainPlayerTurn ? playerDeck : opponentDeck;
         while (numberToDeal > 0 && !Blackboard.gm.isGameOver)
         {
             CardVisual newCard = Instantiate(cardViewPF, activeDeck.position, Quaternion.identity, Blackboard.tableCardsParent.transform);

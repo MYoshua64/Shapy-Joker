@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class NotificationImage : MonoBehaviour
 {
+    [SerializeField] float stayTime = 1.0f;
     bool isActive = false;
 
     public void Show()
@@ -12,7 +13,7 @@ public class NotificationImage : MonoBehaviour
         iTween.Stop(gameObject);
         GetComponent<Image>().color = new Color(1, 1, 1, 1);
         isActive = true;
-        iTween.ValueTo(gameObject, iTween.Hash("from", 1f, "to", 0f, "time", 1f, "delay", 1f,
+        iTween.ValueTo(gameObject, iTween.Hash("from", 1f, "to", 0f, "time", 1f, "delay", stayTime,
             "onupdatetarget", gameObject, "onupdate", "ChangeAlpha", "oncompletetarget", gameObject, "oncomplete", "CancelActive"));
     }
 

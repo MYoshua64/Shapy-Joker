@@ -34,7 +34,7 @@ public class CardVisual : MonoBehaviour
     /// </summary>
     private void OnMouseDown()
     {
-        if (!Blackboard.gm.isPlayerTurn || GameManager.gamePaused || Blackboard.gm.isGameOver) return;
+        if (!Blackboard.gm.allowCardPickUp || GameManager.gamePaused || Blackboard.gm.isGameOver) return;
         Blackboard.gm.ResetSubmitButtonSprite();
         if (selected)
         {
