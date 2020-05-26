@@ -61,12 +61,12 @@ public class Opponent : MonoBehaviour
                 }
                 inspectedCard.Print();
                 myHand.AddToHand(inspectedCard);
-                string neededCard = CalculateNeededCard();
+                string[] neededCard = CalculateNeededCard();
                 SearchForCardWithID(neededCard);
                 firstIndex++;
             } while (!isMySetValid);
         } while (!isMySetValid);
-        string extraCard = CalculateNeededCard(myHand.GetHandGroupType());
+        string[] extraCard = CalculateNeededCard(myHand.GetHandGroupType());
         SearchForCardWithID(extraCard);
         foreach (CardData card in myHand.cardsInHand)
         {
@@ -82,23 +82,30 @@ public class Opponent : MonoBehaviour
         Blackboard.gm.SubmitSet(myHand);
     }
 
-    private void SearchForCardWithID(string neededCard)
+    private void SearchForCardWithID(string[] neededCard)
     {
         string neededJoker = neededCard[0] + "J";
         for (int i = 0; i < cardsOnScreen.Count; i++)
         {
-            if (cardsOnScreen[i].attachedCard.id == neededCard || (!myHand.ContainsJoker() && cardsOnScreen[i].attachedCard.id == neededJoker))
+            if (ThisCardIs(cardsOnScreen[i], neededCard) || (!myHand.ContainsJoker() && ThisCardIs(cardsOnScreen[i], neededJoker)))
             {
-                if (cardsOnScreen[i].attachedCard.jokerCard)
-                {
-                    CardData virtualCard = new CardData(neededCard);
-                    cardsOnScreen[i].AttachCardData(virtualCard, true);
-                }
                 myHand.AddToHand(cardsOnScreen[i]);
                 if (!isMySetValid) myHand.RemoveFromHand(cardsOnScreen[i], default, true);
                 return;
             }
         }
+    }
+
+    private bool ThisCardIs(CardVisual cardVisual, string[] neededCard)
+    {
+        string cardId = cardVisual.attachedCard.id;
+        return neededCard[0].Contains(cardId[0].ToString()) && neededCard[1].Contains(cardId[1].ToString()) && neededCard[2].Contains(cardId[2].ToString());
+    }
+
+    private bool ThisCardIs(CardVisual cardVisual, string neededCard)
+    {
+        string cardId = cardVisual.attachedCard.id;
+        return neededCard.Contains(cardId[0].ToString()) && neededCard[neededCard.Length - 1] == cardId[1];
     }
 
     List<CardVisual> FindMatchesIn(CardData inspectedCard, ICollection collection)
@@ -136,43 +143,47 @@ public class Opponent : MonoBehaviour
         isMySetValid = value;
     }
 
-    string CalculateNeededCard(GroupType groupType = GroupType.None)
+    string[] CalculateNeededCard(GroupType groupType = GroupType.None)
     {
-        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        string[] cardParams = new string[3];
         switch (groupType)
         {
             case GroupType.None:
-                sb.Append(CalculateNeededColor(myHand.cardsInHand[0].color != myHand.cardsInHand[1].color));
-                sb.Append(CalculateNeededShape(myHand.cardsInHand[0].shape != myHand.cardsInHand[1].shape));
-                sb.Append(CalculateNeededNumber(myHand.cardsInHand[0].number != myHand.cardsInHand[1].number));
+                cardParams[0] = CalculateNeededColor(myHand.cardsInHand[0].color != myHand.cardsInHand[1].color);
+                cardParams[1] = CalculateNeededShape(myHand.cardsInHand[0].shape != myHand.cardsInHand[1].shape);
+                cardParams[2] = CalculateNeededNumber(myHand.cardsInHand[0].number != myHand.cardsInHand[1].number);
                 break;
             case GroupType.NumberColor:
-                sb.Append(CalculateNeededColor());
-                sb.Append(CalculateNeededShape(true));
-                sb.Append(CalculateNeededNumber());
+                cardParams[0] = CalculateNeededColor();
+                cardParams[1] = CalculateNeededShape(true);
+                cardParams[2] = CalculateNeededNumber();
                 break;
             case GroupType.ShapeNumber:
-                sb.Append(CalculateNeededColor(true));
-                sb.Append(CalculateNeededShape());
-                sb.Append(CalculateNeededNumber());
+                cardParams[0] = CalculateNeededColor(true);
+                cardParams[1] = CalculateNeededShape();
+                cardParams[2] = CalculateNeededNumber();
                 break;
             case GroupType.ShapeColorCons:
-                sb.Append(CalculateNeededColor());
-                sb.Append(CalculateNeededShape());
-                sb.Append(CalculateNeededNumber(true));
+                cardParams[0] = CalculateNeededColor();
+                cardParams[1] = CalculateNeededShape();
+                cardParams[2] = CalculateNeededNumber(true);
                 break;
             case GroupType.ColorCons:
-                sb.Append(CalculateNeededColor());
-                sb.Append(CalculateNeededShape(true));
-                sb.Append(CalculateNeededNumber(true));
+                cardParams[0] = CalculateNeededColor();
+                cardParams[1] = CalculateNeededShape(true);
+                cardParams[2] = CalculateNeededNumber(true);
                 break;
             case GroupType.ShapeCons:
-                sb.Append(CalculateNeededColor(true));
-                sb.Append(CalculateNeededShape());
-                sb.Append(CalculateNeededNumber(true));
+                cardParams[0] = CalculateNeededColor(true);
+                cardParams[1] = CalculateNeededShape();
+                cardParams[2] = CalculateNeededNumber(true);
                 break;
         }
-        return sb.ToString();
+        for (int i = 0; i < cardParams.Length; i++)
+        {
+            Debug.Log(cardParams[i]);
+        }
+        return cardParams;
     }
 
     string CalculateNeededShape(bool different = false)
@@ -188,7 +199,7 @@ public class Opponent : MonoBehaviour
             bool match = true;
             bool uniqueShapeFound = true;
             CardShape _shape = CardShape.Circle;
-            for (; index < 4 && !uniqueShapeFound; index++)
+            for (; index < 4; index++)
             {
                 uniqueShapeFound = true;
                 _shape = (CardShape)index;
@@ -197,8 +208,8 @@ public class Opponent : MonoBehaviour
                     match = myHand.cardsInHand[i].shape == _shape;
                     uniqueShapeFound = uniqueShapeFound && !match;
                 }
+                if (uniqueShapeFound) shapeStr += ConvertToString(_shape);
             }
-            shapeStr = ConvertToString(_shape);
         }
         return shapeStr;
     }
@@ -216,17 +227,20 @@ public class Opponent : MonoBehaviour
             bool match = true;
             bool uniqueColorFound = true;
             CardColor _color = CardColor.Blue;
-            for (; index < 4 && match; index++)
+            for (; index < 4; index++)
             {
                 uniqueColorFound = true;
                 _color = (CardColor)index;
-                for (int i = 0; i < myHand.cardsInHand.Count && match; i++)
+                for (int i = 0; i < myHand.cardsInHand.Count; i++)
                 {
                     match = myHand.cardsInHand[i].color == _color;
                     uniqueColorFound = uniqueColorFound && !match;
                 }
+                if (uniqueColorFound)
+                {
+                    colorStr += ConvertToString(_color);
+                }
             }
-            colorStr = ConvertToString(_color);
         }
         return colorStr;
     }
@@ -243,11 +257,11 @@ public class Opponent : MonoBehaviour
             int cardIndex = 0;
             if (FindSmallestNumber(out cardIndex) > 1)
             {
-                numStr = (myHand.cardsInHand[cardIndex].number - 1).ToString();
+                numStr += (myHand.cardsInHand[cardIndex].number - 1).ToString();
             }
-            else if (FindGreatestNumber(out cardIndex) < 5)
+            if (FindGreatestNumber(out cardIndex) < 5)
             {
-                numStr = (myHand.cardsInHand[cardIndex].number + 1).ToString();
+                numStr += (myHand.cardsInHand[cardIndex].number + 1).ToString();
             }
         }
         return numStr;
