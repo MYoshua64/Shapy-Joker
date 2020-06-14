@@ -325,7 +325,7 @@ ScriptsOnlyBuild:
     className: TMP_ScrollbarEventHandler
   - hash:
       serializedVersion: 2
-      Hash: 930f394682af4597cd79246cee89e927
+      Hash: 0abcfd7ee3cbe772718299a09138b388
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: Hand
@@ -415,7 +415,7 @@ ScriptsOnlyBuild:
     className: SignalAsset
   - hash:
       serializedVersion: 2
-      Hash: f0ee6b548a1ec41f434db1ba0558ea3a
+      Hash: 75976d5bbb5202d1d9941535cc8ef239
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: GameManager
@@ -433,7 +433,7 @@ ScriptsOnlyBuild:
     className: PhysicsRaycaster
   - hash:
       serializedVersion: 2
-      Hash: ff08ee2bf6a8cc61a85a119524741aa4
+      Hash: 14b8d36b254400ab4ade026a8810a8bd
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: CanvasManager

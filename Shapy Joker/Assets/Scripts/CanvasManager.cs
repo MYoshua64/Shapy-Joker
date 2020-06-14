@@ -14,14 +14,13 @@ public class CanvasManager : MonoBehaviour
         public Image backgroundImage;
         public Sprite playerTurnBG;
         public Sprite opponentTurnBG;
+        public Sprite cardBack;
         public Image playerDeckImage;
         public Image opponentDeckImage;
-        public Sprite[] deckLightImages;
-        public Sprite[] deckDarkImages;
+        public Color deckColorDark;
+        public Sprite[] deckImages;
         public TextMeshProUGUI playerDeckCount;
         public TextMeshProUGUI opponentDeckCount;
-        public Color deckCountLight;
-        public Color deckCountDark;
         public RectTransform submitPanel;
         
         public NotificationImage player1BadSetMessage;
@@ -54,7 +53,8 @@ public class CanvasManager : MonoBehaviour
         public Color normalOutlineTimerColor;
         public Color redTintTimer;
         public Color redTintOutlineTimer;
-        public NotificationImage timeUpImage;
+        public Image timeUpImage;
+        public GameObject timeUpPanel;
     }
 
     public BGSettings backgroundSettings;
@@ -82,28 +82,28 @@ public class CanvasManager : MonoBehaviour
         backgroundSettings.backgroundImage.sprite = isPlayerTurn ? backgroundSettings.playerTurnBG : backgroundSettings.opponentTurnBG;
         if (isPlayerTurn)
         {
-            backgroundSettings.playerDeckCount.color = backgroundSettings.deckCountLight;
-            backgroundSettings.opponentDeckCount.color = backgroundSettings.deckCountDark;
+            backgroundSettings.playerDeckImage.color = Color.white;
+            backgroundSettings.opponentDeckImage.color = backgroundSettings.deckColorDark;
             if (Blackboard.gm.playerScore / 10 > 1)
             {
-                backgroundSettings.playerDeckImage.sprite = backgroundSettings.deckLightImages[Blackboard.gm.playerScore / 10 - 1];
+                backgroundSettings.playerDeckImage.sprite = backgroundSettings.deckImages[Blackboard.gm.playerScore / 10 - 1];
             }
             if (Blackboard.gm.opponentScore / 10 > 1)
             {
-                backgroundSettings.opponentDeckImage.sprite = backgroundSettings.deckDarkImages[Blackboard.gm.opponentScore / 10 - 1];
+                backgroundSettings.opponentDeckImage.sprite = backgroundSettings.deckImages[Blackboard.gm.opponentScore / 10 - 1];
             }
         }
         else
         {
-            backgroundSettings.playerDeckCount.color = backgroundSettings.deckCountDark;
-            backgroundSettings.opponentDeckCount.color = backgroundSettings.deckCountLight;
+            backgroundSettings.playerDeckImage.color = backgroundSettings.deckColorDark;
+            backgroundSettings.opponentDeckImage.color = Color.white;
             if (Blackboard.gm.playerScore / 10 > 1)
             {
-                backgroundSettings.playerDeckImage.sprite = backgroundSettings.deckDarkImages[Blackboard.gm.playerScore / 10 - 1];
+                backgroundSettings.playerDeckImage.sprite = backgroundSettings.deckImages[Blackboard.gm.playerScore / 10 - 1];
             }
             if (Blackboard.gm.opponentScore / 10 > 1)
             {
-                backgroundSettings.opponentDeckImage.sprite = backgroundSettings.deckLightImages[Blackboard.gm.opponentScore / 10 - 1];
+                backgroundSettings.opponentDeckImage.sprite = backgroundSettings.deckImages[Blackboard.gm.opponentScore / 10 - 1];
             }
         }
     }
@@ -166,7 +166,25 @@ public class CanvasManager : MonoBehaviour
     public void ShowTimeUpMessage()
     {
         activeTimer.GetComponent<TimerText>().StopBlinking();
-        timerSettings.timeUpImage.Show();
+        timerSettings.timeUpImage.gameObject.SetActive(true);
+        Invoke("TurnOnTimeUpMessages", 20f / 60f);
+        Invoke("HideTimeUpMessage", 135f / 60f);
+    }
+
+    void TurnOnTimeUpMessages()
+    {
+        timerSettings.timeUpPanel.SetActive(true);
+        Invoke("TurnOffTimeUpMessages", 95f / 60f);
+    }
+
+    void TurnOffTimeUpMessages()
+    {
+        timerSettings.timeUpPanel.SetActive(false);
+    }
+
+    void HideTimeUpMessage()
+    {
+        timerSettings.timeUpImage.gameObject.SetActive(false);
     }
 
     public void ShowBadSetMessage()

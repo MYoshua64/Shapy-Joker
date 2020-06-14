@@ -11,4 +11,5 @@ public static class Blackboard
     public static Timer timer;
     public static SoundPlayer sfxPlayer;
     public static SceneLoader sceneLoader;
+    public static DeckBuilder deckBuilder;
 }

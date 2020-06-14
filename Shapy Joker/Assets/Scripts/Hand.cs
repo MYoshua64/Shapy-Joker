@@ -8,7 +8,8 @@ public class Hand : MonoBehaviour
     public List<CardSlot> cardSlots = new List<CardSlot>();
     public List<CardData> cardsInHand { get; private set; } = new List<CardData>();
     public int maximumCards { get; private set; } = 5;
-    public bool submitted = false;
+    public bool submitted { get; set; } = false;
+    public bool initCheck { get; set; } = true;
     public Button submitButton;
     public Button submitButtonWrong;
     Group attachedSet;
@@ -106,7 +107,8 @@ public class Hand : MonoBehaviour
         attachedSet.CheckSetValidityBySequence();
         if (Blackboard.gm.hotseatMode || (Blackboard.gm.isMainPlayerTurn && !submitting))
         {
-            Blackboard.gm.SetSubmitButtonsTrue(submitButton, submitButtonWrong, attachedSet.isSetValid);
+            if (!initCheck)
+                Blackboard.gm.SetSubmitButtonsTrue(submitButton, submitButtonWrong, attachedSet.isSetValid);
         }
         else
             Blackboard.opponent.ConfirmIfSetValid(attachedSet.isSetValid);

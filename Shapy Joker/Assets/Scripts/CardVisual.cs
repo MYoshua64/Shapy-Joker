@@ -12,12 +12,14 @@ public class CardVisual : MonoBehaviour
     public bool selected { get; private set; } = false;
     bool submitted = false;
     RectTransform slot;
+    SpriteRenderer cardSprite;
     public static int currentHighSortingOrder = 10;
 
     private void Init()
     {
         attachedCardIndex = attachedCard.index;
         cardCollider2D = GetComponent<Collider2D>();
+        cardSprite = GetComponent<SpriteRenderer>();
     }
 
     //private void Update()
@@ -61,12 +63,12 @@ public class CardVisual : MonoBehaviour
         attachedCard = cardData;
         attachedCard.SetCardView(this);
         attachedCardID = attachedCard.id;
+        Init();
         if (!fromJoker)
         {
             name = attachedCard.id;
             int spriteIndex = attachedCard.index < 80 ? attachedCard.index : 80 + (attachedCard.index % 80) / 2;
-            GetComponent<SpriteRenderer>().sprite = CanvasManager.visibleSprites[spriteIndex];
-            Init();
+            cardSprite.sprite = CanvasManager.visibleSprites[spriteIndex];
         }
     }
 
@@ -134,5 +136,10 @@ public class CardVisual : MonoBehaviour
     public void Print()
     {
         Debug.Log(attachedCard.id);
+    }
+
+    public void SetSprite(Sprite sprite)
+    {
+        cardSprite.sprite = sprite;
     }
 }

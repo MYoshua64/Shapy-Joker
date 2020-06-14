@@ -12,7 +12,12 @@ public class DeckBuilder : MonoBehaviour
     List<CardVisual> cardsOnScreen;
     int currentCardIndex = 0;
 
-    private void Start()
+    private void Awake()
+    {
+        Blackboard.deckBuilder = this;
+    }
+
+    public void BuildDeck()
     {
         FillDeck();
         ShuffleDeck();
@@ -120,17 +125,31 @@ public class DeckBuilder : MonoBehaviour
         currentCardIndex = 0;
     }
 
+    public void ReshuffleDeck()
+    {
+        ShuffleDeck();
+    }
+
+    public void RemoveCardFromDeck(CardData cardToRemove)
+    {
+        if (deck.Contains(cardToRemove))
+        {
+            deck.Remove(cardToRemove);
+            currentCardIndex--;
+        }
+    }
+
     void AttachCardsToView()
     {
         cardsOnScreen = Blackboard.tableCardsParent.cardsOnTable;
-        for (; currentCardIndex < cardsOnScreen.Count; currentCardIndex++)
+        for (currentCardIndex = 0; currentCardIndex < cardsOnScreen.Count; currentCardIndex++)
         {
             cardsOnScreen[currentCardIndex].AttachCardData(deck[currentCardIndex]);
             cardsOnScreen[currentCardIndex].SetOriginalPosition(cardsOnScreen[currentCardIndex].transform.localPosition);
         }
     }
 
-    void AttachCardToView(CardVisual cardView)
+    public void AttachCardToView(CardVisual cardView)
     {
         cardView.AttachCardData(deck[currentCardIndex]);
         currentCardIndex++;

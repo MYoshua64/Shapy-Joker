@@ -10,7 +10,6 @@ public class GameManager : MonoBehaviour
     public bool hotseatMode;
     [SerializeField] RectTransform playerWinScreen;
     [SerializeField] RectTransform playerLoseScreen;
-    [SerializeField] DeckBuilder deck;
     [SerializeField] Hand player1Hand;
     [Tooltip("For hotseat mode only!!")] [SerializeField] Hand player2Hand;
     [SerializeField] Button submitButtonDefault;
@@ -29,18 +28,32 @@ public class GameManager : MonoBehaviour
     public int opponentScore { get; private set; } = 34;
     public static bool gamePaused;
     public bool timerOn { get; private set; } = false;
+    List<CardVisual> cardsOnScreen = new List<CardVisual>();
     bool playerSubmitted = false;
+
+    /// <summary>
+    /// Used to prevent the same time toggle to be pressed twice
+    /// </summary>
     Toggle currentToggle;
 
-    //This will contain the positions of the cards before they are submitted
+    /// <summary>
+    /// For card animation ONLY! Used to control animation timing between functions
+    /// </summary>
+    int cardCount = 0;
+
+    /// <summary>
+    /// A list that contains the cards position on the board before they are submitted
+    /// </summary>
     public List<Vector3> lastPositions { get; private set; } = new List<Vector3>();
 
     private void Awake()
     {
         Blackboard.gm = this;
         Blackboard.cm.ChangeBackgroundImage(isMainPlayerTurn);
+        Blackboard.deckBuilder.BuildDeck();
         activeHand = isMainPlayerTurn ? player1Hand : player2Hand;
         if (!isMainPlayerTurn && !hotseatMode) Invoke("ActivateOpponent", 1f);
+        else if (isMainPlayerTurn) StartCoroutine(CheckForSets());
         playerDeckText.text = opponentDeckText.text = "34";
     }
 
@@ -55,6 +68,8 @@ public class GameManager : MonoBehaviour
         AudioListener.volume = value;
         Blackboard.cm.SetAudioImage(value);
     }
+
+    #region Submitting And Ending Turn
 
     public void SubmitSetWrong(Hand submittingHand)
     {
@@ -114,12 +129,13 @@ public class GameManager : MonoBehaviour
         {
             CardVisual _Card = repCards[repCards.Count - 1 - i].cardView;
             iTween.MoveTo(_Card.gameObject, iTween.Hash("position", 12 * Vector3.right, "time", 1.5f));
+            Blackboard.deckBuilder.RemoveCardFromDeck(_Card.attachedCard);
             Destroy(_Card.gameObject, 1.5f);
             activeHand.cardSlots[i].transform.SetParent(Blackboard.cm.transform);
             yield return new WaitForSeconds(0.2f);
         }
         yield return new WaitForSeconds(0.3f);
-        deck.DealNewCards(lastPositions.Count);
+        Blackboard.deckBuilder.DealNewCards(lastPositions.Count);
     }
 
     public void HandleTurnEnd(bool timeUp = false)
@@ -135,23 +151,26 @@ public class GameManager : MonoBehaviour
         {
             if (isMainPlayerTurn)
             {
+                activeHand = player1Hand;
+                StartCoroutine(CheckForSets());
                 allowCardPickUp = true;
                 player1Hand.submitted = false;
-                activeHand = player1Hand;
             }
             else
             {
                 if (hotseatMode)
                 {
+                    activeHand = player2Hand;
+                    StartCoroutine(CheckForSets());
                     allowCardPickUp = true;
                     player2Hand.submitted = false;
-                    activeHand = player2Hand;
                 }
                 else
                 {
                     activeHand = opponentHand;
                     opponentHand.submitted = false;
-                    Invoke("ActivateOpponent", 1f);
+                    float timeToActivateOpponent = timeUp ? 2.5f : 1f;
+                    Invoke("ActivateOpponent", timeToActivateOpponent);
                 }
             }
             Blackboard.cm.ChangeBackgroundImage(isMainPlayerTurn);
@@ -214,6 +233,8 @@ public class GameManager : MonoBehaviour
         Blackboard.opponent.StartTurn();
     }
 
+    #endregion
+    
     void HandleGameOver()
     {
         if (playerScore <= 0)
@@ -230,6 +251,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    #region Timer Toggling
+    
     public void SetTimerOnOff()
     {
         timerOn = !timerOn;
@@ -268,4 +291,380 @@ public class GameManager : MonoBehaviour
         float time = float.Parse(currentToggle.name);
         SetTimerValue(time);
     }
+
+    #endregion
+        
+    #region Combination Checking
+    
+    IEnumerator CheckForSets()
+    {
+        activeHand.initCheck = true;
+        cardsOnScreen = Blackboard.tableCardsParent.GetCardsOnTable();
+        bool isThereValidSet = false;
+        int cardIndex = 0, firstIndex = 0;
+        do
+        {
+            activeHand.ClearHand();
+            List<CardVisual> potentialCards = new List<CardVisual>();
+            if (cardIndex >= cardsOnScreen.Count)
+            {
+                yield return StartCoroutine(Reshuffle());
+                cardIndex = 0;
+            }
+            CardVisual inspectedCard = cardsOnScreen[cardIndex];
+            if (inspectedCard.attachedCard.jokerCard)
+            {
+                cardIndex++;
+                continue;
+            }
+            inspectedCard.Print();
+            cardIndex++;
+            potentialCards = FindMatchesIn(inspectedCard.attachedCard, cardsOnScreen);
+            activeHand.AddToHand(inspectedCard);
+            firstIndex = 0;
+            do
+            {
+                if (firstIndex >= potentialCards.Count) break;
+                if (player1Hand.cardsInHand.Count > 1)
+                {
+                    activeHand.RemoveFromHand(inspectedCard, default, true);
+                }
+                inspectedCard = potentialCards[firstIndex];
+                if (inspectedCard.attachedCard.jokerCard)
+                {
+                    firstIndex++;
+                    continue;
+                }
+                inspectedCard.Print();
+                activeHand.AddToHand(inspectedCard);
+                string[] neededCard = CalculateNeededCard();
+                SearchForCardWithID(neededCard, out isThereValidSet);
+                firstIndex++;
+            } while (!isThereValidSet);
+        } while (!isThereValidSet);
+        activeHand.ClearHand();
+        activeHand.initCheck = false;
+        Debug.Log("Done checking, combination found!");
+    }
+
+    public string[] CalculateNeededCard(GroupType groupType = GroupType.None)
+    {
+        string[] cardParams = new string[3];
+        switch (groupType)
+        {
+            case GroupType.None:
+                cardParams[0] = CalculateNeededColor(activeHand.cardsInHand[0].color != activeHand.cardsInHand[1].color);
+                cardParams[1] = CalculateNeededShape(activeHand.cardsInHand[0].shape != activeHand.cardsInHand[1].shape);
+                cardParams[2] = CalculateNeededNumber(activeHand.cardsInHand[0].number != activeHand.cardsInHand[1].number);
+                break;
+            case GroupType.NumberColor:
+                cardParams[0] = CalculateNeededColor();
+                cardParams[1] = CalculateNeededShape(true);
+                cardParams[2] = CalculateNeededNumber();
+                break;
+            case GroupType.ShapeNumber:
+                cardParams[0] = CalculateNeededColor(true);
+                cardParams[1] = CalculateNeededShape();
+                cardParams[2] = CalculateNeededNumber();
+                break;
+            case GroupType.ShapeColorCons:
+                cardParams[0] = CalculateNeededColor();
+                cardParams[1] = CalculateNeededShape();
+                cardParams[2] = CalculateNeededNumber(true);
+                break;
+            case GroupType.ColorCons:
+                cardParams[0] = CalculateNeededColor();
+                cardParams[1] = CalculateNeededShape(true);
+                cardParams[2] = CalculateNeededNumber(true);
+                break;
+            case GroupType.ShapeCons:
+                cardParams[0] = CalculateNeededColor(true);
+                cardParams[1] = CalculateNeededShape();
+                cardParams[2] = CalculateNeededNumber(true);
+                break;
+        }
+        for (int i = 0; i < cardParams.Length; i++)
+        {
+            Debug.Log(cardParams[i]);
+        }
+        return cardParams;
+    }
+
+    string CalculateNeededShape(bool different = false)
+    {
+        string shapeStr = "";
+        if (!different)
+        {
+            shapeStr = ConvertToString(activeHand.cardsInHand[0].shape);
+        }
+        else
+        {
+            int index = 0;
+            bool match = true;
+            bool uniqueShapeFound = true;
+            CardShape _shape = CardShape.Circle;
+            for (; index < 4; index++)
+            {
+                uniqueShapeFound = true;
+                _shape = (CardShape)index;
+                for (int i = 0; i < activeHand.cardsInHand.Count; i++)
+                {
+                    match = activeHand.cardsInHand[i].shape == _shape;
+                    uniqueShapeFound = uniqueShapeFound && !match;
+                }
+                if (uniqueShapeFound) shapeStr += ConvertToString(_shape);
+            }
+        }
+        return shapeStr;
+    }
+
+    string CalculateNeededColor(bool different = false)
+    {
+        string colorStr = "";
+        if (!different)
+        {
+            colorStr = ConvertToString(activeHand.cardsInHand[0].color);
+        }
+        else
+        {
+            int index = 0;
+            bool match = true;
+            bool uniqueColorFound = true;
+            CardColor _color = CardColor.Blue;
+            for (; index < 4; index++)
+            {
+                uniqueColorFound = true;
+                _color = (CardColor)index;
+                for (int i = 0; i < activeHand.cardsInHand.Count; i++)
+                {
+                    match = activeHand.cardsInHand[i].color == _color;
+                    uniqueColorFound = uniqueColorFound && !match;
+                }
+                if (uniqueColorFound)
+                {
+                    colorStr += ConvertToString(_color);
+                }
+            }
+        }
+        return colorStr;
+    }
+
+    string CalculateNeededNumber(bool different = false)
+    {
+        string numStr = "";
+        if (!different)
+        {
+            numStr = activeHand.cardsInHand[0].number.ToString();
+        }
+        else
+        {
+            int cardIndex = 0;
+            if (FindSmallestNumber(out cardIndex) > 1)
+            {
+                numStr += (activeHand.cardsInHand[cardIndex].number - 1).ToString();
+            }
+            if (FindGreatestNumber(out cardIndex) < 5)
+            {
+                numStr += (activeHand.cardsInHand[cardIndex].number + 1).ToString();
+            }
+        }
+        return numStr;
+    }
+
+    void SearchForCardWithID(string[] neededCard, out bool isMySetValid)
+    {
+        isMySetValid = false;
+        string neededJoker = neededCard[0] + "J";
+        for (int i = 0; i < cardsOnScreen.Count; i++)
+        {
+            if (ThisCardIs(cardsOnScreen[i], neededCard) || (!activeHand.ContainsJoker() && ThisCardIs(cardsOnScreen[i], neededJoker)))
+            {
+                activeHand.AddToHand(cardsOnScreen[i]);
+                isMySetValid = activeHand.isCombinationValid();
+                if (!isMySetValid) activeHand.RemoveFromHand(cardsOnScreen[i], default, true);
+                return;
+            }
+        }
+    }
+
+    private bool ThisCardIs(CardVisual cardVisual, string[] neededCard)
+    {
+        string cardId = cardVisual.attachedCard.id;
+        return neededCard[0].Contains(cardId[0].ToString()) && neededCard[1].Contains(cardId[1].ToString()) && neededCard[2].Contains(cardId[2].ToString());
+    }
+
+    private bool ThisCardIs(CardVisual cardVisual, string neededCard)
+    {
+        string cardId = cardVisual.attachedCard.id;
+        return neededCard.Contains(cardId[0].ToString()) && neededCard[neededCard.Length - 1] == cardId[1];
+    }
+
+    public List<CardVisual> FindMatchesIn(CardData inspectedCard, ICollection collection)
+    {
+        List<CardVisual> potentialCards = new List<CardVisual>();
+        foreach (CardVisual comparedCard in collection)
+        {
+            if (comparedCard.attachedCard == inspectedCard) continue;
+            int matches = 0;
+            //Whenever there is a match in an attribute, the counter goes up by 1
+            matches += Compare(comparedCard.attachedCard.color, inspectedCard.color) +
+                Compare(comparedCard.attachedCard.shape, inspectedCard.shape);
+            if ((matches >= 1 && Compare(comparedCard.attachedCard.number, inspectedCard.number) == 1) || IsThereJoker(comparedCard.attachedCard, inspectedCard)) potentialCards.Add(comparedCard);
+        }
+        return potentialCards;
+    }
+
+    int Compare(int a, int b)
+    {
+        return Mathf.Abs(a - b) <= 1 ? 1 : 0;
+    }
+
+    int Compare(object a, object b)
+    {
+        return a.Equals(b) ? 1 : 0;
+    }
+
+    bool IsThereJoker(CardData a, CardData b)
+    {
+        return a.jokerCard || b.jokerCard;
+    }
+
+    string ConvertToString(CardShape shape)
+    {
+        string str = "";
+        switch (shape)
+        {
+            case CardShape.Joker:
+                str = "J";
+                break;
+            case CardShape.Star:
+                str = "S";
+                break;
+            case CardShape.Rectangle:
+                str = "R";
+                break;
+            case CardShape.Triangle:
+                str = "T";
+                break;
+            case CardShape.Circle:
+                str = "C";
+                break;
+        }
+        return str;
+    }
+
+    string ConvertToString(CardColor color)
+    {
+        string str = "";
+        switch (color)
+        {
+            case CardColor.Yellow:
+                str = "Y";
+                break;
+            case CardColor.Blue:
+                str = "B";
+                break;
+            case CardColor.Red:
+                str = "R";
+                break;
+            case CardColor.Green:
+                str = "G";
+                break;
+        }
+        return str;
+    }
+
+    int FindSmallestNumber(out int index)
+    {
+        int number = 6;
+        index = 0;
+        for (int i = 0; i < player1Hand.cardsInHand.Count; i++)
+        {
+            CardData comparedCard = player1Hand.cardsInHand[i];
+            if (comparedCard.number < number)
+            {
+                number = comparedCard.number;
+                index = i;
+            }
+        }
+        return number;
+    }
+
+    int FindGreatestNumber(out int index)
+    {
+        int number = 0;
+        index = 0;
+        for (int i = 0; i < player1Hand.cardsInHand.Count; i++)
+        {
+            CardData comparedCard = player1Hand.cardsInHand[i];
+            if (comparedCard.number > number)
+            {
+                number = comparedCard.number;
+                index = i;
+            }
+        }
+        return number;
+    }
+
+    #endregion
+
+    #region Card Shuffle Animation
+    
+    public void StartReshuffle()
+    {
+        StartCoroutine(Reshuffle());
+    }
+
+    IEnumerator Reshuffle()
+    {
+        allowCardPickUp = false;
+        cardCount = 0;
+        Blackboard.deckBuilder.ReshuffleDeck();
+        List<CardVisual> cardsOnScreen = Blackboard.tableCardsParent.cardsOnTable;
+        for (int i = 0; i < cardsOnScreen.Count; i++)
+        {
+            iTween.RotateBy(cardsOnScreen[i].gameObject, iTween.Hash("y", 0.25, "time", 0.25f, "easetype", iTween.EaseType.linear, 
+                "oncompletetarget", gameObject, "oncomplete", "ShowCardBack", "oncompleteparams", cardsOnScreen[i]));
+            yield return null;
+        }
+        while (cardCount < cardsOnScreen.Count)
+        {
+            yield return null;
+        }
+        yield return new WaitForSeconds(0.25f);
+        cardCount = 0;
+        for (int i = 0; i < cardsOnScreen.Count; i++)
+        {
+            iTween.RotateBy(cardsOnScreen[i].gameObject, iTween.Hash("y", 0.25, "time", 0.25f, "easetype", iTween.EaseType.linear,
+                "oncompletetarget", gameObject, "oncomplete", "EndAnimation", "oncompleteparams", cardsOnScreen[i]));
+            yield return null;
+        }
+        while (cardCount < cardsOnScreen.Count)
+        {
+            yield return null;
+        }
+        allowCardPickUp = true;
+        Debug.Log("Done");
+    }
+
+    public void ShowCardBack(CardVisual _Card)
+    {
+        _Card.SetSprite(Blackboard.cm.backgroundSettings.cardBack);
+        iTween.RotateBy(_Card.gameObject, iTween.Hash("y", -0.25, "time", 0.25f, "easetype", iTween.EaseType.linear,
+            "oncompletetarget", gameObject, "oncomplete", "IncrementCardCount"));
+    }
+
+    public void IncrementCardCount()
+    {
+        cardCount++;
+    }
+
+    public void EndAnimation(CardVisual _Card)
+    {
+        Blackboard.deckBuilder.AttachCardToView(_Card);
+        iTween.RotateBy(_Card.gameObject, iTween.Hash("y", -0.25, "time", 0.25f, "easetype", iTween.EaseType.linear,
+            "oncompletetarget", gameObject, "oncomplete", "IncrementCardCount"));
+    }
+
+    #endregion
 }
