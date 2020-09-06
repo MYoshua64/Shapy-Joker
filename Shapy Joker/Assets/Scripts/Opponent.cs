@@ -23,6 +23,10 @@ public class Opponent : MonoBehaviour
 
     IEnumerator SearchForSets()
     {
+        while (GameManager.gamePaused)
+        {
+            yield return null;
+        }
         isMySetValid = false;
         int cardIndex = 0, firstIndex = 0;
         do
@@ -41,10 +45,13 @@ public class Opponent : MonoBehaviour
                 cardIndex++;
                 continue;
             }
-            inspectedCard.Print();
             cardIndex++;
             potentialCards = Blackboard.gm.FindMatchesIn(inspectedCard.attachedCard, cardsOnScreen);
             myHand.AddToHand(inspectedCard);
+            while (GameManager.gamePaused)
+            {
+                yield return null;
+            }
             firstIndex = 0;
             do
             {
@@ -59,18 +66,29 @@ public class Opponent : MonoBehaviour
                     firstIndex++;
                     continue;
                 }
-                inspectedCard.Print();
                 myHand.AddToHand(inspectedCard);
+                while (GameManager.gamePaused)
+                {
+                    yield return null;
+                }
                 string[] neededCard = Blackboard.gm.CalculateNeededCard();
                 SearchForCardWithID(neededCard);
                 firstIndex++;
             } while (!isMySetValid);
         } while (!isMySetValid);
+        while (GameManager.gamePaused)
+        {
+            yield return null;
+        }
         string[] extraCard = Blackboard.gm.CalculateNeededCard(myHand.GetHandGroupType());
         SearchForCardWithID(extraCard);
         foreach (CardData card in myHand.cardsInHand)
         {
             myHand.AddToHand(card.cardView, true);
+            while (GameManager.gamePaused)
+            {
+                yield return null;
+            }
             yield return new WaitForSeconds(0.75f);
         }
         yield return new WaitForSeconds(0.5f);
@@ -79,6 +97,10 @@ public class Opponent : MonoBehaviour
             yield return null;
         }
         Debug.LogWarning("Submitted");
+        while (GameManager.gamePaused)
+        {
+            yield return null;
+        }
         Blackboard.gm.SubmitSet(myHand);
     }
 

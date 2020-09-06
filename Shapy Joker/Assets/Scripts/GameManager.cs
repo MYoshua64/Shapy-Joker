@@ -17,9 +17,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI playerDeckText;
     [SerializeField] TextMeshProUGUI opponentDeckText;
     [SerializeField] Sprite buttonDefault;
-    [SerializeField] Sprite buttonCorrect;
     [SerializeField] Sprite buttonWrong;
     [SerializeField] Toggle[] timerToggles;
+    [SerializeField] LayerMask cards;
     public Hand opponentHand;
     public Hand activeHand { get; private set; }
     public bool isMainPlayerTurn { get; private set; } = true;
@@ -30,6 +30,8 @@ public class GameManager : MonoBehaviour
     public bool timerOn { get; private set; } = false;
     List<CardVisual> cardsOnScreen = new List<CardVisual>();
     bool playerSubmitted = false;
+    static bool soundOn = true;
+    static float prevVolume;
 
     /// <summary>
     /// Used to prevent the same time toggle to be pressed twice
@@ -45,6 +47,8 @@ public class GameManager : MonoBehaviour
     /// A list that contains the cards position on the board before they are submitted
     /// </summary>
     public List<Vector3> lastPositions { get; private set; } = new List<Vector3>();
+
+    #region Monobehaviour Callbacks
 
     private void Awake()
     {
@@ -63,17 +67,57 @@ public class GameManager : MonoBehaviour
             HandleTurnEnd();
     }
 
+    #endregion
+
+    #region Sound
+
+    public void ToggleVolume()
+    {
+        soundOn = !soundOn;
+        if (!soundOn)
+        {
+            prevVolume = AudioListener.volume;
+            SetVolume(0);
+        }
+        else
+        {
+            SetVolume(prevVolume);
+            Blackboard.sfxPlayer.PlaySFX(SFXType.UIClick);
+        }
+    }
+
     public void SetVolume(float value)
     {
+        if (value > 0)
+        {
+            prevVolume = value;
+        }
         AudioListener.volume = value;
         Blackboard.cm.SetAudioImage(value);
     }
+
+    private static void PlaySumbitSFX(Hand submittingHand)
+    {
+        SFXType submitSFX = SFXType.CardWhooshThree;
+        if (submittingHand.cardsInHand.Count == 4)
+        {
+            submitSFX = SFXType.CardJingleFour;
+        }
+        else if (submittingHand.cardsInHand.Count == 5)
+        {
+            submitSFX = SFXType.CardSpecialFive;
+        }
+        Blackboard.sfxPlayer.PlaySFX(submitSFX);
+    }
+
+    #endregion
 
     #region Submitting And Ending Turn
 
     public void SubmitSetWrong(Hand submittingHand)
     {
         if (gamePaused || submittingHand.submitted || activeHand != submittingHand) return;
+        Blackboard.sfxPlayer.PlaySFX(SFXType.WrongSet);
         CancelInvoke("ResetSubmitButtonSprite");
         submittingHand.submitButtonWrong.GetComponent<Image>().sprite = buttonWrong;
         Invoke("ResetSubmitButtonSprite", 2f);
@@ -85,7 +129,7 @@ public class GameManager : MonoBehaviour
         if (gamePaused || submittingHand.submitted || activeHand != submittingHand) return;
         submittingHand.submitted = true;
         allowCardPickUp = false;
-        Blackboard.sfxPlayer.PlaySubmitSFX();
+        PlaySumbitSFX(submittingHand);
         SetSubmitButtonsTrue(submittingHand.submitButton, submittingHand.submitButtonWrong, false);
         if (timerOn) Blackboard.timer.Stop();
         foreach (CardData card in activeHand.cardsInHand)
@@ -94,7 +138,6 @@ public class GameManager : MonoBehaviour
             if (!_Card) continue;
             _Card.SetSubmitted();
         }
-        CardVisual.currentHighSortingOrder = 10;
         StartCoroutine(MoveCardsOutOfScreen());
     }
 
@@ -111,28 +154,42 @@ public class GameManager : MonoBehaviour
             activeHand.RemoveFromHand(_Card, true);
             Blackboard.tableCardsParent.RemoveFromFormation(_Card);
         }
+        while (gamePaused)
+        {
+            yield return null;
+        }
         yield return new WaitForSeconds(0.1f);
-        for (int j = 0; j < Blackboard.cm.backgroundSettings.submitPanel.childCount; j++)
+        for (int j = 0; j < repCards.Count; j++)
         {
             CardVisual _Card = repCards[j].cardView;
-            Transform selectedSlot = Blackboard.cm.backgroundSettings.submitPanel.GetChild(repCards.Count - 1 - j);
             float zAngle = repCards.Count % 2 == 1 ? 15 * (repCards.Count / 2) - 15 * j : 22.5f - 15 * j;
-            float yPos = repCards.Count % 2 == 1 ? -0.16f * Mathf.Pow(j - repCards.Count / 2, 2) : -0.3f * (0.5f * Mathf.Pow(j, 2) - 1.5f * j + 1);
-            Vector3 cardPosition = new Vector3(selectedSlot.position.x, yPos, selectedSlot.position.z);
-            _Card.GetComponent<SpriteRenderer>().sortingOrder = 15 + j;
-            iTween.MoveTo(_Card.gameObject, iTween.Hash("position", cardPosition, "time", 0.7f, "easetype", iTween.EaseType.easeOutBounce));
+            float yPos = repCards.Count % 2 == 1 ? -2f * Mathf.Pow(j - repCards.Count / 2, 2) + 0.3f: -3f * (0.5f * Mathf.Pow(j, 2) - 1.5f * j);
+            Vector3 position = Vector2.zero + Vector2.up * yPos;
+            position.x += Screen.height / Screen.width * 12f * (j - repCards.Count / 2 + (repCards.Count % 2 == 1 ? 0 : 0.5f));
+            Vector3 cardPosition = Camera.main.ViewportToWorldPoint(position);
+            iTween.MoveTo(_Card.gameObject, iTween.Hash("position", cardPosition, "time", 0.7f, "islocal", true, "easetype", iTween.EaseType.easeOutBounce));
             iTween.ScaleTo(_Card.gameObject, iTween.Hash("scale", 2 * Vector3.one, "time", 0.7f));
             iTween.RotateTo(_Card.gameObject, iTween.Hash("rotation", zAngle * Vector3.forward, "time", 0.7f));
+            _Card.transform.SetAsLastSibling();
+        }
+        while (gamePaused)
+        {
+            yield return null;
         }
         yield return new WaitForSeconds(1.5f);
         for (int i = 0; i < repCards.Count; i++)
         {
             CardVisual _Card = repCards[repCards.Count - 1 - i].cardView;
-            iTween.MoveTo(_Card.gameObject, iTween.Hash("position", 12 * Vector3.right, "time", 1.5f));
+            iTween.MoveTo(_Card.gameObject, iTween.Hash("position", _Card.transform.position + 10 * Vector3.right, "time", 1.5f));
+            Blackboard.sfxPlayer.PlaySFX(SFXType.CardFlyAway);
             Blackboard.deckBuilder.RemoveCardFromDeck(_Card.attachedCard);
             Destroy(_Card.gameObject, 1.5f);
             activeHand.cardSlots[i].transform.SetParent(Blackboard.cm.transform);
             yield return new WaitForSeconds(0.2f);
+        }
+        while (gamePaused)
+        {
+            yield return null;
         }
         yield return new WaitForSeconds(0.3f);
         Blackboard.deckBuilder.DealNewCards(lastPositions.Count);
@@ -152,8 +209,14 @@ public class GameManager : MonoBehaviour
             if (isMainPlayerTurn)
             {
                 activeHand = player1Hand;
-                StartCoroutine(CheckForSets());
-                allowCardPickUp = true;
+                if (timeUp)
+                {
+                    Invoke("StartSearchForSets", 3f);
+                }
+                else
+                {
+                    StartSearchForSets();
+                }
                 player1Hand.submitted = false;
             }
             else
@@ -161,20 +224,30 @@ public class GameManager : MonoBehaviour
                 if (hotseatMode)
                 {
                     activeHand = player2Hand;
-                    StartCoroutine(CheckForSets());
-                    allowCardPickUp = true;
+                    if (timeUp)
+                    {
+                        Invoke("StartSearchForSets", 3f);
+                    }
+                    else
+                    {
+                        StartSearchForSets();
+                    }
                     player2Hand.submitted = false;
                 }
                 else
                 {
                     activeHand = opponentHand;
                     opponentHand.submitted = false;
-                    float timeToActivateOpponent = timeUp ? 2.5f : 1f;
+                    float timeToActivateOpponent = timeUp ? 3f : 1f;
                     Invoke("ActivateOpponent", timeToActivateOpponent);
                 }
             }
             Blackboard.cm.ChangeBackgroundImage(isMainPlayerTurn);
-            if (timerOn) Blackboard.timer.Run();
+            if (timerOn)
+            {
+                Blackboard.timer.ResetTimer();
+                Blackboard.cm.UpdateTimerText();
+            }
         }
         else
         {
@@ -230,31 +303,41 @@ public class GameManager : MonoBehaviour
 
     void ActivateOpponent()
     {
+        if (timerOn)
+        {
+            Blackboard.timer.Run();
+        }
         Blackboard.opponent.StartTurn();
     }
 
-    #endregion
-    
     void HandleGameOver()
     {
         if (playerScore <= 0)
         {
-            playerWinScreen.gameObject.SetActive(true);
+            Blackboard.sfxPlayer.PlaySFX(SFXType.Win);
+            Blackboard.cm.ShowWinScreen();
         }
         else if (opponentScore <= 0)
         {
+            Blackboard.cm.ShowLoseScreen();
+
             if (!hotseatMode)
             {
-                Blackboard.cm.backgroundSettings.screenFaderImage.gameObject.SetActive(true);
+                Blackboard.sfxPlayer.PlaySFX(SFXType.Lose);
+                return;
             }
-            playerLoseScreen.gameObject.SetActive(true);
+            Blackboard.sfxPlayer.PlaySFX(SFXType.Win);
         }
     }
+
+    #endregion
+    
 
     #region Timer Toggling
     
     public void SetTimerOnOff()
     {
+        Blackboard.sfxPlayer.PlaySFX(SFXType.UIClick);
         timerOn = !timerOn;
         foreach (Toggle toggle in timerToggles)
         {
@@ -262,6 +345,8 @@ public class GameManager : MonoBehaviour
         }
         if (timerOn)
         {
+            SetTimerValue(20);
+            Blackboard.timer.ResetTimer();
             Blackboard.cm.ToggleNameActive(isMainPlayerTurn);
             timerToggles[0].isOn = true;
         }
@@ -277,25 +362,39 @@ public class GameManager : MonoBehaviour
     {
         if (!timerOn) return;
         Blackboard.timer.SetTurnTime(time);
+        Blackboard.timer.ResetTimer();
         Blackboard.timer.Run();
     }
 
     public void SetCurrentToggle(Toggle toggle)
     {
         if (!timerOn || !toggle.isOn) return;
+        toggle.interactable = false;
+        Blackboard.sfxPlayer.PlaySFX(SFXType.UIClick);
         if (currentToggle)
         {
             currentToggle.isOn = toggle == currentToggle;
         }
         currentToggle = toggle;
+        for (int i = 0; i < timerToggles.Length; i++)
+        {
+            if (timerToggles[i] == currentToggle) continue;
+            timerToggles[i].isOn = false;
+            timerToggles[i].interactable = true;
+        }
         float time = float.Parse(currentToggle.name);
         SetTimerValue(time);
     }
 
     #endregion
-        
+
     #region Combination Checking
-    
+
+    void StartSearchForSets()
+    {
+        StartCoroutine(CheckForSets());
+    }
+
     IEnumerator CheckForSets()
     {
         activeHand.initCheck = true;
@@ -317,7 +416,6 @@ public class GameManager : MonoBehaviour
                 cardIndex++;
                 continue;
             }
-            inspectedCard.Print();
             cardIndex++;
             potentialCards = FindMatchesIn(inspectedCard.attachedCard, cardsOnScreen);
             activeHand.AddToHand(inspectedCard);
@@ -335,7 +433,6 @@ public class GameManager : MonoBehaviour
                     firstIndex++;
                     continue;
                 }
-                inspectedCard.Print();
                 activeHand.AddToHand(inspectedCard);
                 string[] neededCard = CalculateNeededCard();
                 SearchForCardWithID(neededCard, out isThereValidSet);
@@ -345,6 +442,9 @@ public class GameManager : MonoBehaviour
         activeHand.ClearHand();
         activeHand.initCheck = false;
         Debug.Log("Done checking, combination found!");
+        allowCardPickUp = true;
+        if (timerOn)
+            Blackboard.timer.Run();
     }
 
     public string[] CalculateNeededCard(GroupType groupType = GroupType.None)
@@ -382,10 +482,6 @@ public class GameManager : MonoBehaviour
                 cardParams[1] = CalculateNeededShape();
                 cardParams[2] = CalculateNeededNumber(true);
                 break;
-        }
-        for (int i = 0; i < cardParams.Length; i++)
-        {
-            Debug.Log(cardParams[i]);
         }
         return cardParams;
     }
@@ -609,6 +705,11 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region Card Shuffle Animation
+
+    public void StartReshuffleAnimation()
+    {
+        Blackboard.cm.ShowReshuffling();
+    }
     
     public void StartReshuffle()
     {

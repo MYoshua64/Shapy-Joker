@@ -42,7 +42,7 @@ public class DeckBuilder : MonoBehaviour
             }
             CreateCard(preDeck[index], index);
         }
-        
+        //RS4 53; RC3 42; RJ 84; RR1 45;
     }
 
     void DetermineStringID(int color, int shape, int number)
@@ -168,12 +168,16 @@ public class DeckBuilder : MonoBehaviour
             CardVisual newCard = Instantiate(cardViewPF, activeDeck.position, Quaternion.identity, Blackboard.tableCardsParent.transform);
             Blackboard.tableCardsParent.AddToFormation(newCard);
             newCard.SetOriginalPosition(Blackboard.gm.lastPositions[0]);
-            iTween.MoveTo(newCard.gameObject, iTween.Hash("position", Blackboard.gm.lastPositions[0], "time", 0.75f,
-                "oncompletetarget", Blackboard.sfxPlayer.gameObject, "oncomplete", "PlaySFX", "oncompleteparameters", false));
+            iTween.MoveTo(newCard.gameObject, iTween.Hash("position", Blackboard.gm.lastPositions[0], "time", 0.75f, "islocal", true,
+                "onstarttarget", Blackboard.sfxPlayer.gameObject, "onstart", "PlaySFX", "onstartparams", SFXType.CardPlace));
             Blackboard.gm.lastPositions.RemoveAt(0);
             AttachCardToView(newCard);
             numberToDeal--;
             Blackboard.gm.LowerScore();
+            while (GameManager.gamePaused)
+            {
+                yield return null;
+            }
             yield return new WaitForSeconds(0.3f);
         }
         Blackboard.gm.HandleTurnEnd();

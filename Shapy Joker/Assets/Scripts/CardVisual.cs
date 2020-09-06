@@ -1,25 +1,26 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CardVisual : MonoBehaviour
 {
     [SerializeField] string attachedCardID;
-    public Vector3 originalPos { get; private set; }
+    public Vector3 originalPos;
     public CardData attachedCard { get; private set; }
     public int attachedCardIndex;
     Collider2D cardCollider2D;
     public bool selected { get; private set; } = false;
+    bool pickable = true;
     bool submitted = false;
     RectTransform slot;
-    SpriteRenderer cardSprite;
-    public static int currentHighSortingOrder = 10;
+    Image cardSprite;
 
     private void Init()
     {
         attachedCardIndex = attachedCard.index;
         cardCollider2D = GetComponent<Collider2D>();
-        cardSprite = GetComponent<SpriteRenderer>();
+        cardSprite = GetComponent<Image>();
     }
 
     //private void Update()
@@ -34,9 +35,9 @@ public class CardVisual : MonoBehaviour
     /// <summary>
     /// What happens when the player taps on a card
     /// </summary>
-    private void OnMouseDown()
+    public void HandleTouch()
     {
-        if (!Blackboard.gm.allowCardPickUp || GameManager.gamePaused || Blackboard.gm.isGameOver) return;
+        if (!Blackboard.gm.allowCardPickUp || GameManager.gamePaused || Blackboard.gm.isGameOver || !pickable) return;
         Blackboard.gm.ResetSubmitButtonSprite();
         if (selected)
         {
@@ -80,10 +81,10 @@ public class CardVisual : MonoBehaviour
             if (!submitted)
             {
                 transform.SetParent(Blackboard.tableCardsParent.transform);
-                iTween.MoveTo(gameObject, iTween.Hash("position", originalPos, "time", 0.75f, "oncompletetarget", gameObject, "oncomplete", "SetSortingOrder",
-                    "oncompleteparams", 5));
+                iTween.MoveTo(gameObject, iTween.Hash("position", originalPos, "time", 0.75f, "islocal", true,
+                    "oncompletetarget", gameObject, "oncomplete", "ResetClickable"));
                 slot.SetParent(null);
-                Blackboard.sfxPlayer.PlayCardSFX(false);
+                Blackboard.sfxPlayer.PlaySFX(SFXType.CardPlace);
             }
             slot = null;
         }
@@ -93,27 +94,20 @@ public class CardVisual : MonoBehaviour
             if (slot)
             {
                 slot.SetParent(Blackboard.gm.activeHand.transform);
-                SetSortingOrder(currentHighSortingOrder);
-                currentHighSortingOrder++;
+                transform.SetAsLastSibling();
                 UpdatePosition();
                 slot.GetComponent<CardSlot>().open = false;
-                Blackboard.sfxPlayer.PlayCardSFX(true);
+                Blackboard.sfxPlayer.PlaySFX(SFXType.CardTake);
             }
         }
         else return;
+        pickable = false;
         selected = !selected;
-    }
-
-    void SetSortingOrder(int order)
-    {
-        GetComponent<SpriteRenderer>().sortingOrder = order;
     }
 
     public void SetSubmitted()
     {
         submitted = true;
-        if (slot)
-            slot.SetParent(Blackboard.cm.backgroundSettings.submitPanel);
     }
 
     public void SetOriginalPosition(Vector3 originalPos)
@@ -131,6 +125,8 @@ public class CardVisual : MonoBehaviour
         if (!slot) yield break;
         yield return new WaitForSeconds(delayTime);
         if (transform.position != slot.position) iTween.MoveTo(gameObject, iTween.Hash("position", slot.position, "time", 0.75f, "easetype", easeType));
+        yield return new WaitForSeconds(0.75f);
+        ResetClickable();
     }
 
     public void Print()
@@ -141,5 +137,10 @@ public class CardVisual : MonoBehaviour
     public void SetSprite(Sprite sprite)
     {
         cardSprite.sprite = sprite;
+    }
+
+    void ResetClickable()
+    {
+        pickable = true;
     }
 }

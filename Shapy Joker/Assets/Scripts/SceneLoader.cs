@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 public class SceneLoader : MonoBehaviour
 {
     [SerializeField] FaderImage faderImage;
+    public static bool isLoading = true;
     int nextLoadedScene = 0;
 
     private void Awake()
@@ -17,6 +18,7 @@ public class SceneLoader : MonoBehaviour
     public void DeactivateFader()
     {
         faderImage.gameObject.SetActive(false);
+        isLoading = false;
     }
 
     public void LoadNewScene()
@@ -26,6 +28,9 @@ public class SceneLoader : MonoBehaviour
 
     public void StartTransitionToScene(int index)
     {
+        if (isLoading) return;
+        isLoading = true;
+        Blackboard.sfxPlayer.PlaySFX(SFXType.UIClick);
         GameManager.gamePaused = false;
         if (Blackboard.gm) Blackboard.gm.isGameOver = false;
         nextLoadedScene = index;
@@ -34,6 +39,15 @@ public class SceneLoader : MonoBehaviour
     }
 
     public void ExitGame()
+    {
+        if (isLoading) return;
+        isLoading = true;
+        Blackboard.sfxPlayer.PlaySFX(SFXType.UIClick);
+        faderImage.gameObject.SetActive(true);
+        faderImage.FadeOnApplicationQuit();
+    }
+
+    public void Quit()
     {
         Application.Quit();
     }

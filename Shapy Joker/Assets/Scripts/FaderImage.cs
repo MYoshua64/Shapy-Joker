@@ -21,4 +21,10 @@ public class FaderImage : MonoBehaviour
     {
         GetComponent<Image>().color = new Color(0, 0, 0, value);
     }
+
+    public void FadeOnApplicationQuit()
+    {
+        iTween.ValueTo(gameObject, iTween.Hash("from", 0, "to", 1, "time", 0.75f, "onupdatetarget", gameObject,
+            "onupdate", "ChangeAlpha", "oncompletetarget", Blackboard.sceneLoader.gameObject, "oncomplete", "Quit"));
+    }
 }

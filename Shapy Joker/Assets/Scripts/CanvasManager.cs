@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using System.Linq;
 using TMPro;
 using System;
+using UnityEngine.EventSystems;
 
 public class CanvasManager : MonoBehaviour
 {
@@ -21,12 +22,46 @@ public class CanvasManager : MonoBehaviour
         public Sprite[] deckImages;
         public TextMeshProUGUI playerDeckCount;
         public TextMeshProUGUI opponentDeckCount;
-        public RectTransform submitPanel;
         
         public NotificationImage player1BadSetMessage;
         public NotificationImage player2BadSetMessage;
 
         public Image screenFaderImage;
+
+        public Image reshufflingImage;
+    }
+
+    [System.Serializable]
+    public class InstructionsSettings
+    {
+        public GameObject instructionPanel;
+        public Sprite[] instructionsPages;
+        public Image instructionImage;
+        public Button nextArrowButton;
+        public Button previousArrowButton;
+        private BaseEventData e;
+
+        public int currentPage { get; private set; } = 1;
+
+        public void NextPage()
+        {
+            Blackboard.sfxPlayer.PlaySFX(SFXType.UIClick);
+            currentPage++;
+            instructionImage.sprite = instructionsPages[currentPage - 1];
+            nextArrowButton.interactable = currentPage < instructionsPages.Length;
+            nextArrowButton.OnDeselect(e);
+            previousArrowButton.interactable = true;
+        }
+
+        public void PreviousPage()
+        {
+            Blackboard.sfxPlayer.PlaySFX(SFXType.UIClick);
+            currentPage--;
+            instructionImage.sprite = instructionsPages[currentPage - 1];
+            previousArrowButton.interactable = currentPage > 1;
+            previousArrowButton.OnDeselect(e);
+            nextArrowButton.interactable = true;
+        }
     }
 
     [System.Serializable]
@@ -37,6 +72,11 @@ public class CanvasManager : MonoBehaviour
         public Image volumeImage;
         public Sprite volumeLight;
         public Sprite volumeDark;
+        [HideInInspector]
+        public List<Image> optionImages;
+        public Slider volumeSlider;
+        [HideInInspector]
+        public bool active;
     }
 
     [System.Serializable]
@@ -45,8 +85,8 @@ public class CanvasManager : MonoBehaviour
         public Image timerImage;
         public Sprite timerLight;
         public Sprite timerDark;
-        public SpriteRenderer playerName;
-        public SpriteRenderer opponentName;
+        public Image playerName;
+        public Image opponentName;
         public TextMeshProUGUI playerTimerText;
         public TextMeshProUGUI opponentTimerText;
         public Color normalTimerColor;
@@ -57,9 +97,21 @@ public class CanvasManager : MonoBehaviour
         public GameObject timeUpPanel;
     }
 
+    [System.Serializable]
+    public class EndScreens
+    {
+        public RectTransform playerWinScreen;
+        public Image winningPlayerName;
+        public Sprite player1;
+        public Sprite player2;
+        public RectTransform playerLoseScreen;
+    }
+
     public BGSettings backgroundSettings;
     public OptionsScreen optionsScreenSettings;
     public TimerSettings timerSettings;
+    public InstructionsSettings instructionsSettings;
+    public EndScreens endScreens;
     public static List<Sprite> visibleSprites;
     NotificationImage badSetMessage;
     TextMeshProUGUI activeTimer;
@@ -72,9 +124,19 @@ public class CanvasManager : MonoBehaviour
         visibleSprites = Resources.LoadAll("Cards", typeof(Sprite)).Cast<Sprite>().ToList();
     }
 
+    private void Start()
+    {
+        Image[] buttons = optionsScreenSettings.optionsScreen.GetComponentsInChildren<Image>();
+        optionsScreenSettings.optionImages = buttons.ToList();
+        optionsScreenSettings.optionImages.RemoveAt(0);
+        optionsScreenSettings.optionImages.RemoveAt(0);
+        optionsScreenSettings.volumeSlider.value = AudioListener.volume;
+    }
+
     public void SetAudioImage(float volume)
     {
         optionsScreenSettings.volumeImage.sprite = volume <= 0 ?optionsScreenSettings.volumeDark : optionsScreenSettings.volumeLight;
+        optionsScreenSettings.volumeSlider.value = AudioListener.volume;
     }
 
     public void ChangeBackgroundImage(bool isPlayerTurn)
@@ -108,18 +170,45 @@ public class CanvasManager : MonoBehaviour
         }
     }
 
-    public void SetOptionsScreenActive(bool value)
+    public void ToggleOptionsMenu()
     {
         if (Blackboard.gm.isGameOver) return;
-        optionsScreenSettings.optionsScreenButton.interactable = !value;
-        Vector3 newPosition = value ? Vector3.zero : new Vector3(0, 9.24f, 0);
-        iTween.MoveTo(optionsScreenSettings.optionsScreen.gameObject,  newPosition, 1.5f);
-        GameManager.gamePaused = value;
+        optionsScreenSettings.active = !optionsScreenSettings.active;
+        Blackboard.sfxPlayer.PlaySFX(SFXType.UIClick);
+        Blackboard.sfxPlayer.SetPlayerPause(!optionsScreenSettings.active);
+        //On open options, give about 1.5seconds before buttons are interactable, on cole set interactable to false immediately
+        if (optionsScreenSettings.active)
+        {
+            Invoke("EnableOptionsMenuButtons", 0.5f);
+        }
+        else
+        {
+            for (int i = 0; i < optionsScreenSettings.optionImages.Count; i++)
+            {
+                optionsScreenSettings.optionImages[i].raycastTarget = false;
+            }
+        }
+        Vector3 position = optionsScreenSettings.active ? Vector3.zero : 980f * Vector3.up;
+        iTween.MoveTo(optionsScreenSettings.optionsScreen.gameObject, iTween.Hash("position", position, "time", 1.5f, "islocal", true));
+        GameManager.gamePaused = optionsScreenSettings.active;
+    }
+
+    void EnableOptionsMenuButtons()
+    {
+        optionsScreenSettings.optionImages[0].raycastTarget = true;
+        for (int i = 0; i < optionsScreenSettings.optionImages.Count; i++)
+        {
+            optionsScreenSettings.optionImages[i].raycastTarget = true;
+        }
     }
 
     public void ToggleTimerIcon(bool value)
     {
         timerSettings.timerImage.sprite = value ? timerSettings.timerLight : timerSettings.timerDark;
+        if (value)
+        {
+            activeTimer = Blackboard.gm.isMainPlayerTurn ? timerSettings.playerTimerText : timerSettings.opponentTimerText;
+        }
     }
 
     public void UpdateTimerText()
@@ -131,6 +220,7 @@ public class CanvasManager : MonoBehaviour
         {
             if (!startedFlashing)
             {
+                Blackboard.sfxPlayer.SetTimerSFXOn(true);
                 activeTimer.faceColor = timerSettings.redTintTimer;
                 activeTimer.outlineColor = timerSettings.redTintOutlineTimer;
                 startedFlashing = true;
@@ -144,6 +234,13 @@ public class CanvasManager : MonoBehaviour
             activeTimer.outlineColor = timerSettings.normalOutlineTimerColor;
         }
         activeTimer.text = timerText;
+    }
+
+    public void StopTimerTextBlinking()
+    {
+        //TODO Find why this is null
+        activeTimer.GetComponent<TimerText>().StopBlinking();
+        Blackboard.sfxPlayer.SetTimerSFXOn(false);
     }
 
     public void ToggleNameActive(bool isPlayerTurn)
@@ -167,14 +264,7 @@ public class CanvasManager : MonoBehaviour
     {
         activeTimer.GetComponent<TimerText>().StopBlinking();
         timerSettings.timeUpImage.gameObject.SetActive(true);
-        Invoke("TurnOnTimeUpMessages", 20f / 60f);
-        Invoke("HideTimeUpMessage", 135f / 60f);
-    }
-
-    void TurnOnTimeUpMessages()
-    {
-        timerSettings.timeUpPanel.SetActive(true);
-        Invoke("TurnOffTimeUpMessages", 95f / 60f);
+        Invoke("HideTimeUpMessage", 168f / 60f);
     }
 
     void TurnOffTimeUpMessages()
@@ -191,5 +281,54 @@ public class CanvasManager : MonoBehaviour
     {
         badSetMessage = Blackboard.gm.isMainPlayerTurn ? backgroundSettings.player1BadSetMessage : backgroundSettings.player2BadSetMessage;
         badSetMessage.Show();
+    }
+
+    public void SetInstructionScreenActive(bool value)
+    {
+        Blackboard.sfxPlayer.PlaySFX(SFXType.UIClick);
+        instructionsSettings.instructionPanel.SetActive(value);
+    }
+
+    public void NextPage()
+    {
+        instructionsSettings.NextPage();
+    }
+
+    public void PreviousPage()
+    {
+        instructionsSettings.PreviousPage();
+    }
+
+    public void ShowReshuffling()
+    {
+        backgroundSettings.reshufflingImage.gameObject.SetActive(true);
+        Invoke("DisableShufflingImage", 140f / 60f);
+    }
+
+    void DisableShufflingImage()
+    {
+        backgroundSettings.reshufflingImage.gameObject.SetActive(false);
+        Blackboard.gm.StartReshuffle();
+    }
+
+    public void ShowWinScreen()
+    {
+        if (Blackboard.gm.hotseatMode)
+        {
+            endScreens.winningPlayerName.sprite = endScreens.player1;
+        }
+        endScreens.playerWinScreen.gameObject.SetActive(true);
+    }
+
+    public void ShowLoseScreen()
+    {
+        if (Blackboard.gm.hotseatMode)
+        {
+            endScreens.winningPlayerName.sprite = endScreens.player2;
+            endScreens.playerWinScreen.gameObject.SetActive(true);
+            return;
+        }
+        backgroundSettings.screenFaderImage.gameObject.SetActive(true);
+        endScreens.playerLoseScreen.gameObject.SetActive(true);
     }
 }

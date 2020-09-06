@@ -19,14 +19,19 @@ public class Timer : MonoBehaviour
         turnTime = time;
     }
 
-    public void Run()
+    public void ResetTimer()
     {
         timeCountDown = turnTime;
+    }
+
+    public void Run()
+    {
         running = true;
     }
 
     public void Stop()
     {
+        Blackboard.cm.StopTimerTextBlinking();
         running = false;
     }
 

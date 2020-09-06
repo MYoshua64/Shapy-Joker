@@ -9,9 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Splash Screen.unity
     guid: fb0ef903cd73ba24c9ede319eb56c348
   - enabled: 1
-    path: Assets/Scenes/Game Screen SinglePlayer.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
+    path: Assets/Scenes/Game Screen SinglePlayer V2.unity
+    guid: 23120f7a7ba93fc4ca98d11278b23ed7
   - enabled: 1
-    path: Assets/Scenes/Game Screen Hotseat.unity
-    guid: f27afd0361e23154dadfbea6ed4ae4ef
+    path: Assets/Scenes/Game Screen Hotseat V3.unity
+    guid: c77af613e414aa4438fa53e49508171d
   m_configObjects: {}
