@@ -61,12 +61,6 @@ public class GameManager : MonoBehaviour
         playerDeckText.text = opponentDeckText.text = "34";
     }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.KeypadPeriod) && isMainPlayerTurn)
-            HandleTurnEnd();
-    }
-
     #endregion
 
     #region Sound
@@ -163,9 +157,9 @@ public class GameManager : MonoBehaviour
         {
             CardVisual _Card = repCards[j].cardView;
             float zAngle = repCards.Count % 2 == 1 ? 15 * (repCards.Count / 2) - 15 * j : 22.5f - 15 * j;
-            float yPos = repCards.Count % 2 == 1 ? -2f * Mathf.Pow(j - repCards.Count / 2, 2) + 0.3f: -3f * (0.5f * Mathf.Pow(j, 2) - 1.5f * j);
+            float yPos = repCards.Count % 2 == 1 ? -2f * Mathf.Pow(j - repCards.Count / 2, 2) + 0.3f : -3f * (0.5f * Mathf.Pow(j, 2) - 1.5f * j);
             Vector3 position = Vector2.zero + Vector2.up * yPos;
-            position.x += Screen.height / Screen.width * 12f * (j - repCards.Count / 2 + (repCards.Count % 2 == 1 ? 0 : 0.5f));
+            position.x += (float)Screen.height / Screen.width * 12f * (j - repCards.Count / 2 + (repCards.Count % 2 == 1 ? 0 : 0.5f));
             Vector3 cardPosition = Camera.main.ViewportToWorldPoint(position);
             iTween.MoveTo(_Card.gameObject, iTween.Hash("position", cardPosition, "time", 0.7f, "islocal", true, "easetype", iTween.EaseType.easeOutBounce));
             iTween.ScaleTo(_Card.gameObject, iTween.Hash("scale", 2 * Vector3.one, "time", 0.7f));

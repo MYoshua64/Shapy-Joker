@@ -42,7 +42,6 @@ public class DeckBuilder : MonoBehaviour
             }
             CreateCard(preDeck[index], index);
         }
-        //RS4 53; RC3 42; RJ 84; RR1 45;
     }
 
     void DetermineStringID(int color, int shape, int number)

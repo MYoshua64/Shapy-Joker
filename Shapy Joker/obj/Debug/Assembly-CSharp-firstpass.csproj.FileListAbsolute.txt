@@ -388,8 +388,6 @@ D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Un
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.Rider.Editor.dll
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.TextMeshPro.dll
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.TextMeshPro.Editor.dll
-D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.Timeline.dll
-D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.Timeline.Editor.dll
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.VSCode.Editor.dll
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\UnityEditor.dll
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\UnityEditor.iOS.Extensions.Common.dll
@@ -463,11 +461,9 @@ D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Ex
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.CecilTools.dll
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\UnityEngine.xml
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\UnityEditor.xml
-D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.Timeline.Editor.pdb
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.VSCode.Editor.pdb
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.TextMeshPro.Editor.pdb
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\UnityEngine.UI.pdb
-D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.Timeline.pdb
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.CollabProxy.Editor.pdb
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.Rider.Editor.pdb
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\Unity.TextMeshPro.pdb
@@ -536,3 +532,7 @@ D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\obj\Debug\Assembl
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\obj\Debug\Assembly-CSharp-firstpass.csproj.CopyComplete
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\obj\Debug\Assembly-CSharp-firstpass.dll
 D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\obj\Debug\Assembly-CSharp-firstpass.pdb
+D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\UnityEditor.TestRunner.dll
+D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\UnityEngine.TestRunner.dll
+D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\UnityEditor.TestRunner.pdb
+D:\Game Making Stuff\Unity\Projects\Very-Important\Shapy Joker\Temp\bin\Debug\UnityEngine.TestRunner.pdb
